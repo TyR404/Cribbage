@@ -1,0 +1,21 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-image: url("/Pictures/wood-background.jpg");
+  text-align: center;
+  padding: 45vh 0;
+}
+
+table {
+  display: inline-block;
+}
+
+td {
+  width: 2em;
+  height: 2em;
+  background-color: #eeeeee;
+}
