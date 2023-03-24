@@ -2,20 +2,98 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
 body {
   background-image: url("/Pictures/wood-background.jpg");
   text-align: center;
-  padding: 45vh 0;
+  display: grid;
+  grid-template-areas: "main main main main main aside";
+}
+main {
+  grid-area: main;
 }
 
 table {
   display: inline-block;
+  background-color: black;
+  padding: 2rem;
+  border-collapse: separate;
+  border-spacing: 0.2rem;
+  border-spacing: 0.2rem 2rem;
+  width: 95%;
+  border-radius: 1rem;
+  margin: 1rem;
+}
+
+tr {
+  margin: 1rem;
 }
 
 td {
   width: 2em;
   height: 2em;
   background-color: #eeeeee;
+  margin: 1rem;
+  border-radius: 1rem;
+}
+
+.player1 .scored {
+  background-color: hsl(0, 100%, 50%);
+}
+.player2 .scored {
+  background-color: hsl(203, 100%, 50%);
+}
+
+.player1-details {
+  background-color: hsl(0, 100%, 73%);
+}
+.player2-details {
+  background-color: hsl(203, 100%, 73%);
+}
+
+.details {
+  width: 75%;
+  margin: auto;
+  padding: 2rem;
+  border-radius: 1rem;
+  display: flex;
+}
+.info {
+  text-align: left;
+  width: 100%;
+}
+
+.info p {
+  margin-bottom: 1rem;
+}
+
+.player-hand {
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+}
+
+aside {
+  grid-area: aside;
+}
+.crib {
+  background-color: hsl(203, 100%, 73%);
+  padding: 2rem;
+  border-radius: 1rem;
+}
+
+.crib-owner {
+  margin: 1rem;
+}
+
+.crib-hand {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.card {
+  aspect-ratio: 2 / 3;
+  width: 10rem;
+  display: block;
 }
