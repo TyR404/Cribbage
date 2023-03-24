@@ -1,3 +1,7 @@
+const peggingPhase = "pegging";
+const cribSelectionPhase = "cribSelection";
+const initialCut = "initialCut";
+const midTurnCut = "midTurnCut";
 function Deck() {
   this.cards = [];
   this.init();
@@ -27,7 +31,10 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [
+      this.cards[randomIndex],
+      this.cards[currentIndex],
+    ];
   }
 };
 
@@ -53,7 +60,21 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
-  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const cardNames = [
+    "A",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K",
+  ];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -62,11 +83,11 @@ Card.prototype.valueOf = function () {
 };
 
 function CribbageBoard() {
-  this.players = [];
+  this.players = [new Player("player1"), new Player("player2")];
   this.deck = new Deck();
-  this.crib = [];
   // whose turn it is
   this.currentPlayer = 0;
+  this.phase = initialCut;
 }
 CribbageBoard.prototype.addCrib = function () {
   // get player who has crib
@@ -86,10 +107,32 @@ CribbageBoard.prototype.scorePlayers = function () {
   // run the check score function
 };
 // will run the game
-CribbageBoard.prototype.play = function () {
-  // run add players
-  // loop through players
-  //    change who has crib
+CribbageBoard.prototype.initialCut = function () {
+  let player1 = this.players[0];
+  let player2 = this.players[1];
+
+  let player1hand = player1.hand;
+  let player2hand = player2.hand;
+
+  while (player1hand[0] === player2hand[0]) {
+    for (let i = 0; i < 2; i++) {
+      this.deck.shuffle();
+      let cut = this.deck.draw(1);
+      this.players[this.currentPlayer].hand.push(cut);
+      this.currentPlayer++;
+    }
+  }
+
+  if (player1hand < player2hand) {
+    player1.isCrib = true;
+    this.currentPlayer = 0;
+  } else {
+    player2.isCrib = true;
+    this.currentPlayer = 1;
+  }
+
+  console.log(this);
+
   //    distribute hand
   //    force players to only have 4 cards in hand, move rest to crib
   // get random card/cut the deck using who has the crib
@@ -101,19 +144,12 @@ CribbageBoard.prototype.play = function () {
   // update score AGAIN/check for win
 };
 
-CribbageBoard.prototype.addPlayers() = function () {
-  // loop twice?
-  // prompt for player name
-  // maybe ask for who is getting first crib? If not, then just set it to the first inputted player\
-  // generate new player
-}
-
 function Player(name) {
   this.name = name;
   this.hand = [];
-  this.hasCrib = false;
+  this.crib = [];
   this.score = 0;
-  this.isTurn = true;
+  this.isCrib = false;
 }
 // have hand so we can add the crib using the same function?
 Player.prototype.scoreHand = function (hand) {
@@ -127,3 +163,7 @@ Player.prototype.scoreHand = function (hand) {
 Player.prototype.getCurrentScore = function () {
   // return this.score
 };
+
+function render(board) {}
+const board = new CribbageBoard();
+board.initialCut();
