@@ -52,9 +52,9 @@ function Card(suit, rank) {
   this.isPegged = false;
 }
 
-Card.prototype.toString = function () {
-  const cardNames = ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"];
-  return `${cardNames[this.rank - 1]} of ${this.suit}`;
+Card.prototype.toCardCode = function () {
+  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
 Card.prototype.valueOf = function () {
