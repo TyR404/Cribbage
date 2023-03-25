@@ -2,6 +2,9 @@ const peggingPhase = "pegging";
 const cardSelectionPhase = "cardSelection";
 const initialCut = "initialCut";
 const midTurnCut = "midTurnCut";
+
+let phases = [initialCut, cardSelectionPhase, midTurnCut, peggingPhase];
+
 function Deck() {
   this.cards = [];
   this.init();
@@ -86,7 +89,9 @@ function CribbageBoard() {
   this.deck = new Deck();
   // whose turn it is
   this.currentPlayer = 0;
-  this.phase = initialCut;
+  this.phase = "";
+  this.changePhase = false;
+  this.phaseNum;
 }
 
 CribbageBoard.prototype.addCrib = function () {
@@ -127,6 +132,16 @@ CribbageBoard.prototype.emptyHand = function () {
   }
 };
 
+CribbageBoard.prototype.dealCards = function (n) {
+  for (let i = 0; i < 2; i++) {
+    this.deck.shuffle();
+    let cut = this.deck.draw(n);
+    for (let j = 0; j < n; j++) {
+      this.players[i].hand.push(cut[j]);
+    }
+  }
+};
+
 CribbageBoard.prototype.initialCut = function () {
   let player1 = this.players[0];
   let player2 = this.players[1];
@@ -135,12 +150,7 @@ CribbageBoard.prototype.initialCut = function () {
   let player2hand = player2.hand;
 
   while (player1hand[0] === player2hand[0]) {
-    for (let i = 0; i < 2; i++) {
-      this.deck.shuffle();
-      let cut = this.deck.draw(1);
-      this.players[this.currentPlayer].hand.push(cut[0]);
-      this.currentPlayer++;
-    }
+    this.dealCards(1);
   }
 
   if (player1hand < player2hand) {
@@ -150,7 +160,17 @@ CribbageBoard.prototype.initialCut = function () {
     player2.isCrib = true;
     this.currentPlayer = 1;
   }
-  this.phase = cardSelectionPhase;
+  setTimeout(() => {
+    this.changePhase = true;
+    render(this);
+  }, 2000);
+};
+
+CribbageBoard.prototype.cardSelectionPhase = function () {
+  this.emptyHand();
+
+  this.dealCards(6);
+  // console.log(this);
 };
 
 function Player(name) {
@@ -173,6 +193,27 @@ Player.prototype.getCurrentScore = function () {
   // return this.score
 };
 
-function render(board) {}
+function reset(board) {
+  board.phaseNum = 0;
+  board.emptyHand();
+  board.changePhase = true;
+  render(board);
+}
+
+function render(board) {
+  if (board.changePhase) {
+    board.phase = phases[board.phaseNum];
+    board.phaseNum++;
+  }
+  if (board.phase === initialCut) {
+    board.changePhase = true;
+    board.initialCut();
+  }
+  console.log(board.phase);
+  if (board.phase === cardSelectionPhase) {
+    board.changePhase = true;
+    board.cardSelectionPhase();
+  }
+}
 const board = new CribbageBoard();
-board.initialCut();
+reset(board);
