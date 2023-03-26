@@ -1,7 +1,10 @@
 const peggingPhase = "pegging";
-const cribSelectionPhase = "cribSelection";
+const cardSelectionPhase = "cardSelection";
 const initialCut = "initialCut";
 const midTurnCut = "midTurnCut";
+
+let phases = [initialCut, cardSelectionPhase, midTurnCut, peggingPhase];
+
 function Deck() {
   this.cards = [];
   this.init();
@@ -56,7 +59,6 @@ function Card(suit, rank) {
   this.suit = suit;
   this.rank = rank;
   this.faceCard = this.rank > 10 ? true : false;
-  this.isPegged = false;
 }
 
 Card.prototype.toCardCode = function () {
@@ -87,13 +89,17 @@ function CribbageBoard() {
   this.deck = new Deck();
   // whose turn it is
   this.currentPlayer = 0;
-  this.phase = initialCut;
+  this.phase = "";
+  this.changePhase = false;
+  this.phaseNum;
 }
+
 CribbageBoard.prototype.addCrib = function () {
   // get player who has crib
   // run player.scoreHand(this.crib)
   // basically, reuse the lovely scorehand function on the player
 };
+
 CribbageBoard.prototype.pegging = function () {
   // alternate through players until both decks are empty
   //    check for if the current pegging round total equals 15
@@ -102,11 +108,40 @@ CribbageBoard.prototype.pegging = function () {
   //    check if current pegging round is 31 or no cards can be put down
   //    add the score for that turn to total player score
 };
+
 CribbageBoard.prototype.scorePlayers = function () {
   // loop though players
   // run the check score function
 };
-// will run the game
+
+CribbageBoard.prototype.emptyHand = function () {
+  let player1 = this.players[0];
+  let player2 = this.players[1];
+
+  let player1hand = player1.hand;
+  let player2hand = player2.hand;
+
+  for (let i = 0; i < player1hand.length; i++) {
+    let cardToPutBack = player1hand.pop();
+    this.deck.cards.push(cardToPutBack);
+  }
+
+  for (let i = 0; i < player2hand.length; i++) {
+    let cardToPutBack = player2hand.pop();
+    this.deck.cards.push(cardToPutBack);
+  }
+};
+
+CribbageBoard.prototype.dealCards = function (n) {
+  for (let i = 0; i < 2; i++) {
+    this.deck.shuffle();
+    let cut = this.deck.draw(n);
+    for (let j = 0; j < n; j++) {
+      this.players[i].hand.push(cut[j]);
+    }
+  }
+};
+
 CribbageBoard.prototype.initialCut = function () {
   let player1 = this.players[0];
   let player2 = this.players[1];
@@ -115,12 +150,7 @@ CribbageBoard.prototype.initialCut = function () {
   let player2hand = player2.hand;
 
   while (player1hand[0] === player2hand[0]) {
-    for (let i = 0; i < 2; i++) {
-      this.deck.shuffle();
-      let cut = this.deck.draw(1);
-      this.players[this.currentPlayer].hand.push(cut);
-      this.currentPlayer++;
-    }
+    this.dealCards(1);
   }
 
   if (player1hand < player2hand) {
@@ -130,18 +160,17 @@ CribbageBoard.prototype.initialCut = function () {
     player2.isCrib = true;
     this.currentPlayer = 1;
   }
+  setTimeout(() => {
+    this.changePhase = true;
+    render(this);
+  }, 2000);
+};
 
-  console.log(this);
+CribbageBoard.prototype.cardSelectionPhase = function () {
+  this.emptyHand();
 
-  //    distribute hand
-  //    force players to only have 4 cards in hand, move rest to crib
-  // get random card/cut the deck using who has the crib
-  // give two points if cut card is a jack
-  // run the pegging function
-  // update score/check for win
-  // scoring hands
-  // score the crib
-  // update score AGAIN/check for win
+  this.dealCards(6);
+  // console.log(this);
 };
 
 function Player(name) {
@@ -164,6 +193,27 @@ Player.prototype.getCurrentScore = function () {
   // return this.score
 };
 
-function render(board) {}
+function reset(board) {
+  board.phaseNum = 0;
+  board.emptyHand();
+  board.changePhase = true;
+  render(board);
+}
+
+function render(board) {
+  if (board.changePhase) {
+    board.phase = phases[board.phaseNum];
+    board.phaseNum++;
+  }
+  if (board.phase === initialCut) {
+    board.changePhase = true;
+    board.initialCut();
+  }
+  console.log(board.phase);
+  if (board.phase === cardSelectionPhase) {
+    board.changePhase = true;
+    board.cardSelectionPhase();
+  }
+}
 const board = new CribbageBoard();
-board.initialCut();
+reset(board);
