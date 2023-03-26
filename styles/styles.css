@@ -17,7 +17,7 @@ main {
 
 table {
   display: inline-block;
-  background-color: black;
+  background-color: rgb(117, 117, 117);
   padding: 2rem;
   border-collapse: separate;
   border-spacing: 0.2rem;
@@ -25,6 +25,7 @@ table {
   width: 95%;
   border-radius: 1rem;
   margin: 1rem;
+  box-shadow: 1px 5px 5px black;
 }
 
 tr {
@@ -34,16 +35,19 @@ tr {
 td {
   width: 2em;
   height: 2em;
+  aspect-ratio: 1 / 1;
   background-color: #eeeeee;
   margin: 1rem;
   border-radius: 1rem;
+  position: relative;
+  box-shadow: inset 1px 5px 5px black;
 }
 
 .player1 .scored {
-  background-color: hsl(0, 100%, 50%);
+  background-color: hsl(0, 100%, 73%);
 }
 .player2 .scored {
-  background-color: hsl(203, 100%, 50%);
+  background-color: hsl(203, 100%, 73%);
 }
 
 .player1-details {
@@ -59,6 +63,7 @@ td {
   padding: 2rem;
   border-radius: 1rem;
   display: flex;
+  box-shadow: 1px 5px 5px black;
 }
 .info {
   text-align: left;
@@ -84,6 +89,7 @@ aside {
   background-color: hsl(203, 100%, 73%);
   padding: 2rem;
   border-radius: 1rem;
+  box-shadow: 1px 5px 5px black;
 }
 
 .crib-owner {
@@ -94,10 +100,21 @@ aside {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
+  margin: auto;
 }
 .card {
   aspect-ratio: 3 / 4;
   max-width: 5rem;
   min-width: 1rem;
   display: block;
+  box-shadow: 1px 5px 5px black;
+  border-radius: 0.3rem;
+}
+
+i {
+  font-size: 3rem;
+  position: absolute;
+  z-index: 1;
+  top: -100%;
+  transform: translateX(-55%);
 }
