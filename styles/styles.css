@@ -86,7 +86,7 @@ aside {
 }
 
 .crib {
-  background-color: hsl(203, 100%, 73%);
+  background-color: rgb(117, 117, 117);
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 1px 5px 5px black;
@@ -109,6 +109,7 @@ aside {
   display: block;
   box-shadow: 1px 5px 5px black;
   border-radius: 0.3rem;
+  margin: 0.5rem;
 }
 
 i {
@@ -117,4 +118,15 @@ i {
   z-index: 1;
   top: -100%;
   transform: translateX(-55%);
+}
+
+.cut-card-container {
+  background-color: rgb(117, 117, 117);
+  border-radius: 1rem;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
 }

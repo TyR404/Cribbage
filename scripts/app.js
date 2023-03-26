@@ -34,10 +34,7 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [
-      this.cards[randomIndex],
-      this.cards[currentIndex],
-    ];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
   }
 };
 
@@ -62,21 +59,7 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
-  const cardNames = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-  ];
+  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -208,12 +191,63 @@ function render(board) {
   if (board.phase === initialCut) {
     board.changePhase = true;
     board.initialCut();
+    renderUI(board);
   }
   console.log(board.phase);
   if (board.phase === cardSelectionPhase) {
     board.changePhase = true;
     board.cardSelectionPhase();
+    renderUI(board);
   }
 }
+
+function renderUI(board) {
+  const cribbageBoardUI = document.querySelector(".cribbage-board");
+  // iterates through each player
+  for (let i = 0; i < board.players.length; i++) {
+    const currentPlayer = board.players[i];
+    const currentPlayerUI = document.querySelector(`.player${i + 1}-details`);
+    // HANDLES EACH PLAYERS NAME AND SCORE
+    currentPlayerUI.querySelector(".player-name").textContent = currentPlayer.name;
+    currentPlayerUI.querySelector(".player-score").textContent = currentPlayer.score;
+
+    // CHANGES THE POINTS ON THE VISUAL BOARD
+    const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
+    const currentRowElementsUI = [...currentRowUI.querySelectorAll("td")];
+    // for every score the player has, adds colored background
+    for (let i = 0; i < currentPlayer.score + 2; i++) {
+      currentRowElementsUI[i].classList.add("scored");
+    }
+    // adds pin at the last score
+    currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+
+    // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
+    const allPegs = [...currentRowUI.querySelectorAll("i")];
+    allPegs.length <= 2 ? allPegs : allPegs[0].remove();
+
+    // HANDLES EACH PLAYERS HANDS
+    const currentPlayerHandUI = currentPlayerUI.querySelector(`.player-hand`);
+    // clears old cards
+    currentPlayerHandUI.innerHTML = "";
+    // inserts each card into the HTML
+    currentPlayer.hand.forEach((card) => {
+      currentPlayerHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
+    });
+  }
+  // DEALS WITH CRIB
+  const cribUI = document.querySelector(".crib");
+  const currentCribOwner = board.players.find((player) => player.isCrib === true);
+  // changes crib owner
+  cribUI.querySelector(".crib-owner").textContent = `It is ${currentCribOwner.name}'s Crib`;
+
+  const cribHandUI = cribUI.querySelector(".crib-hand");
+  // clears old cards
+  cribHandUI.innerHTML = "";
+  // adds new crib cards
+  currentCribOwner.crib.forEach((card) => {
+    cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
+  });
+}
+
 const board = new CribbageBoard();
 reset(board);
