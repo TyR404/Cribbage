@@ -34,7 +34,10 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [
+      this.cards[randomIndex],
+      this.cards[currentIndex],
+    ];
   }
 };
 
@@ -59,7 +62,21 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
-  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const cardNames = [
+    "A",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K",
+  ];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -132,11 +149,12 @@ CribbageBoard.prototype.initialCut = function () {
   let player1hand = player1.hand;
   let player2hand = player2.hand;
 
-  while (player1hand[0] === player2hand[0]) {
-    this.dealCards(1);
-  }
+  this.dealCards(1);
 
-  if (player1hand < player2hand) {
+  console.log(player1hand[0].rank);
+  console.log(player2hand[0].rank);
+
+  if (player1hand[0].rank < player2hand[0].rank) {
     player1.isCrib = true;
     this.currentPlayer = 0;
   } else {
@@ -194,6 +212,7 @@ function render(board) {
     renderUI(board);
   }
   console.log(board.phase);
+  console.log(board.players);
   if (board.phase === cardSelectionPhase) {
     board.changePhase = true;
     board.cardSelectionPhase();
@@ -208,8 +227,10 @@ function renderUI(board) {
     const currentPlayer = board.players[i];
     const currentPlayerUI = document.querySelector(`.player${i + 1}-details`);
     // HANDLES EACH PLAYERS NAME AND SCORE
-    currentPlayerUI.querySelector(".player-name").textContent = currentPlayer.name;
-    currentPlayerUI.querySelector(".player-score").textContent = currentPlayer.score;
+    currentPlayerUI.querySelector(".player-name").textContent =
+      currentPlayer.name;
+    currentPlayerUI.querySelector(".player-score").textContent =
+      currentPlayer.score;
 
     // CHANGES THE POINTS ON THE VISUAL BOARD
     const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
@@ -219,7 +240,10 @@ function renderUI(board) {
       currentRowElementsUI[i].classList.add("scored");
     }
     // adds pin at the last score
-    currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+    currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML(
+      "beforeend",
+      `<i class="fa-sharp fa-solid fa-map-pin"></i>`
+    );
 
     // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
     const allPegs = [...currentRowUI.querySelectorAll("i")];
@@ -231,21 +255,31 @@ function renderUI(board) {
     currentPlayerHandUI.innerHTML = "";
     // inserts each card into the HTML
     currentPlayer.hand.forEach((card) => {
-      currentPlayerHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
+      currentPlayerHandUI.insertAdjacentHTML(
+        "beforeend",
+        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
+      );
     });
   }
   // DEALS WITH CRIB
   const cribUI = document.querySelector(".crib");
-  const currentCribOwner = board.players.find((player) => player.isCrib === true);
+  const currentCribOwner = board.players.find(
+    (player) => player.isCrib === true
+  );
   // changes crib owner
-  cribUI.querySelector(".crib-owner").textContent = `It is ${currentCribOwner.name}'s Crib`;
+  cribUI.querySelector(
+    ".crib-owner"
+  ).textContent = `It is ${currentCribOwner.name}'s Crib`;
 
   const cribHandUI = cribUI.querySelector(".crib-hand");
   // clears old cards
   cribHandUI.innerHTML = "";
   // adds new crib cards
   currentCribOwner.crib.forEach((card) => {
-    cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
+    cribHandUI.insertAdjacentHTML(
+      "beforeend",
+      `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
+    );
   });
 }
 
