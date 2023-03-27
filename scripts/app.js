@@ -167,6 +167,39 @@ function Player(name) {
 Player.prototype.scoreHand = function (hand) {
   // This and the pegging function will be pain
   // check for 15s (How? idk)
+  function calculateFifteens(array) {
+    // holds all combination that past the given tests
+    let allSets = [];
+
+    // calls recursion function
+    calculateFifteensHelper([], array, allSets);
+    // log all the sets the passes the test
+    console.log(allSets);
+  }
+  function calculateFifteensHelper(subset, array, allSets) {
+    // stops recursion when the array is empty and no more values can be added
+    if (array.length === 0) {
+      return;
+    }
+    // removes the first item in the input and saves it
+    let newItem = array.splice(0, 1);
+    // recurs WITHOUT adding the new item
+    calculateFifteensHelper([...subset], [...array], allSets);
+    // recurs WITH adding the new item
+    subset.push(newItem[0]);
+    calculateFifteensHelper([...subset], [...array], allSets);
+
+    // If the current subset totals to 15, or anything else we may like
+    if (subset.reduce((accumulator, value) => (accumulator += value)) === 15) {
+      // adds the current subset to the final array
+      allSets.push([...subset]);
+      // stops recursion
+      return;
+    }
+  }
+  // We can edit this function later
+  // calculateFifteens([10, 5, 8, 2, 5]);
+
   // check for runs (How? probably a sort function)
   // check for doubles/pairs (Sort function again?)
   // check for same suit (array.every())
