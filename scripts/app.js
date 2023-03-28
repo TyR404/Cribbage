@@ -328,16 +328,20 @@ function renderUI(board) {
     // CHANGES THE POINTS ON THE VISUAL BOARD
     const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
     const currentRowElementsUI = [...currentRowUI.querySelectorAll("td")];
+    const allPegs = [...currentRowUI.querySelectorAll("i")];
     // for every score the player has, adds colored background
     for (let i = 0; i < currentPlayer.score + 2; i++) {
       currentRowElementsUI[i].classList.add("scored");
     }
-    // adds pin at the last score
-    currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
-
-    // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
-    const allPegs = [...currentRowUI.querySelectorAll("i")];
-    allPegs.length <= 2 ? allPegs : allPegs[0].remove();
+    console.log(allPegs);
+    if (currentPlayer.score + 1 > allPegs[allPegs.length - 1].parentElement.cellIndex) {
+      if (allPegs.length >= 2) {
+        // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
+        allPegs[0].remove();
+      }
+      // adds pin at the last score
+      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+    }
 
     // HANDLES EACH PLAYERS HANDS
     const currentPlayerHandUI = currentPlayerUI.querySelector(`.player-hand`);
