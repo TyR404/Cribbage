@@ -34,10 +34,7 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [
-      this.cards[randomIndex],
-      this.cards[currentIndex],
-    ];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
   }
 };
 
@@ -62,21 +59,7 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
-  const cardNames = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-  ];
+  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -185,16 +168,65 @@ function Player(name) {
 Player.prototype.scoreHand = function (hand) {
   // This and the pegging function will be pain
   // check for 15s (How? idk)
-  function calculateFifteens(array) {
+  function calculateScoreOfHand(array) {
     // holds all combination that past the given tests
-    let allSets = [];
+    let allFifteens = [];
+    let allPairs = [];
+    let allRuns = [];
 
     // calls recursion function
-    calculateFifteensHelper([], array, allSets);
+    lookForPairsAndFifteens([], [...array], allFifteens, allPairs);
+
+    // // looks for runs
+    lookForRuns([...array], allRuns);
+
     // log all the sets the passes the test
-    console.log(allSets);
+    console.log(allRuns);
+    console.log(allFifteens);
+    console.log(allPairs);
   }
-  function calculateFifteensHelper(subset, array, allSets) {
+
+  function lookForRuns(array, allRuns) {
+    // sorts array from lowest value to highest
+    array.sort((a, b) => a - b);
+
+    // holds current run
+    let currentRun = [];
+    // hold if there are duplicate runs (like if you have 7789, that would be 2 runs of 789)
+    let runAmount = 1;
+    // for every element in the array
+    for (let i = 0; i < array.length; i++) {
+      // if the current array element doesn't equal the previous one
+      if (array[i] !== array[i - 1]) {
+        // if its the last element in the array
+        if (i === array.length - 1) {
+          // add it to the current run
+          currentRun.push(array[i]);
+        }
+        // if the current element isnt one more that the previous one or if its the last element in the array
+        if (array[i] !== array[i - 1] + 1 || i === array.length - 1) {
+          // checks if the current run is 3 or more long (78 is not a run but 789 is)
+          if (currentRun.length >= 3) {
+            // pushes the current run into all runs as many times as there is duplicates (12334 => 1234, 1234)
+            for (let j = 0; j < runAmount; j++) {
+              allRuns.push([...currentRun]);
+            }
+          }
+          // resets run amount and the current run
+          runAmount = 1;
+          currentRun = [];
+        }
+        // adds the current element to the current run
+        currentRun.push(array[i]);
+      } else {
+        // if the current array element equals the previous one, then adds one to the run counter
+        runAmount++;
+      }
+    }
+  }
+
+  function lookForPairsAndFifteens(subset, insertedArray, allFifteens, allPairs) {
+    let array = [...insertedArray];
     // stops recursion when the array is empty and no more values can be added
     if (array.length === 0) {
       return;
@@ -202,24 +234,26 @@ Player.prototype.scoreHand = function (hand) {
     // removes the first item in the input and saves it
     let newItem = array.splice(0, 1);
     // recurs WITHOUT adding the new item
-    calculateFifteensHelper([...subset], [...array], allSets);
+    lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
     // recurs WITH adding the new item
     subset.push(newItem[0]);
-    calculateFifteensHelper([...subset], [...array], allSets);
+    lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
 
     // If the current subset totals to 15, or anything else we may like
     if (subset.reduce((accumulator, value) => (accumulator += value)) === 15) {
       // adds the current subset to the final array
-      allSets.push([...subset]);
+      allFifteens.push([...subset]);
       // stops recursion
       return;
     }
+    // look for pairs
+    if (subset.length === 2 && subset.every((value) => value === subset[0])) {
+      allPairs.push([...subset]);
+    }
   }
-  // We can edit this function later
+  // We can edit this function later, currently it only takes in an array of numbers
   // calculateFifteens([10, 5, 8, 2, 5]);
 
-  // check for runs (How? probably a sort function)
-  // check for doubles/pairs (Sort function again?)
   // check for same suit (array.every())
   // check for jacks with the same suit as the cut card
 };
@@ -260,10 +294,8 @@ function renderUI(board) {
     const currentPlayer = board.players[i];
     const currentPlayerUI = document.querySelector(`.player${i + 1}-details`);
     // HANDLES EACH PLAYERS NAME AND SCORE
-    currentPlayerUI.querySelector(".player-name").textContent =
-      currentPlayer.name;
-    currentPlayerUI.querySelector(".player-score").textContent =
-      currentPlayer.score;
+    currentPlayerUI.querySelector(".player-name").textContent = currentPlayer.name;
+    currentPlayerUI.querySelector(".player-score").textContent = currentPlayer.score;
 
     // CHANGES THE POINTS ON THE VISUAL BOARD
     const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
@@ -273,10 +305,7 @@ function renderUI(board) {
       currentRowElementsUI[i].classList.add("scored");
     }
     // adds pin at the last score
-    currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML(
-      "beforeend",
-      `<i class="fa-sharp fa-solid fa-map-pin"></i>`
-    );
+    currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
 
     // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
     const allPegs = [...currentRowUI.querySelectorAll("i")];
@@ -288,31 +317,21 @@ function renderUI(board) {
     currentPlayerHandUI.innerHTML = "";
     // inserts each card into the HTML
     currentPlayer.hand.forEach((card) => {
-      currentPlayerHandUI.insertAdjacentHTML(
-        "beforeend",
-        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
-      );
+      currentPlayerHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
     });
   }
   // DEALS WITH CRIB
   const cribUI = document.querySelector(".crib");
-  const currentCribOwner = board.players.find(
-    (player) => player.isCrib === true
-  );
+  const currentCribOwner = board.players.find((player) => player.isCrib === true);
   // changes crib owner
-  cribUI.querySelector(
-    ".crib-owner"
-  ).textContent = `It is ${currentCribOwner.name}'s Crib`;
+  cribUI.querySelector(".crib-owner").textContent = `It is ${currentCribOwner.name}'s Crib`;
 
   const cribHandUI = cribUI.querySelector(".crib-hand");
   // clears old cards
   cribHandUI.innerHTML = "";
   // adds new crib cards
   currentCribOwner.crib.forEach((card) => {
-    cribHandUI.insertAdjacentHTML(
-      "beforeend",
-      `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
-    );
+    cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
   });
 }
 
