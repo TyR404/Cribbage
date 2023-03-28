@@ -1,9 +1,7 @@
-const peggingPhase = "pegging";
-const cardSelectionPhase = "cardSelection";
 const initialCut = "initialCut";
+const cardSelectionPhase = "cardSelection";
 const midTurnCut = "midTurnCut";
-
-let phases = [initialCut, cardSelectionPhase, midTurnCut, peggingPhase];
+const peggingPhase = "pegging";
 
 function Deck() {
   this.cards = [];
@@ -90,29 +88,8 @@ function CribbageBoard() {
   // whose turn it is
   this.currentPlayer = 0;
   this.phase = "";
-  this.changePhase = false;
-  this.phaseNum;
+  this.cut = ["BACK"];
 }
-
-CribbageBoard.prototype.addCrib = function () {
-  // get player who has crib
-  // run player.scoreHand(this.crib)
-  // basically, reuse the lovely scorehand function on the player
-};
-
-CribbageBoard.prototype.pegging = function () {
-  // alternate through players until both decks are empty
-  //    check for if the current pegging round total equals 15
-  //    check for doubles
-  //    check for runs
-  //    check if current pegging round is 31 or no cards can be put down
-  //    add the score for that turn to total player score
-};
-
-CribbageBoard.prototype.scorePlayers = function () {
-  // loop though players
-  // run the check score function
-};
 
 CribbageBoard.prototype.emptyHand = function () {
   let player1 = this.players[0];
@@ -142,6 +119,26 @@ CribbageBoard.prototype.dealCards = function (n) {
   }
 };
 
+CribbageBoard.prototype.findCard = function (player, suit, rank) {
+  let foundCard;
+  for (let i of this.players[player].hand) {
+    if (i.suit === suit && i.rank === rank) {
+      foundCard = i;
+      return foundCard;
+    }
+  }
+};
+
+CribbageBoard.prototype.findCribPlayer = function () {
+  let foundPlayer;
+  for (let i of this.players) {
+    if (i.isCrib) {
+      foundPlayer = i;
+      return foundPlayer;
+    }
+  }
+};
+
 CribbageBoard.prototype.initialCut = function () {
   let player1 = this.players[0];
   let player2 = this.players[1];
@@ -151,9 +148,6 @@ CribbageBoard.prototype.initialCut = function () {
 
   this.dealCards(1);
 
-  console.log(player1hand[0].rank);
-  console.log(player2hand[0].rank);
-
   if (player1hand[0].rank < player2hand[0].rank) {
     player1.isCrib = true;
     this.currentPlayer = 0;
@@ -161,17 +155,51 @@ CribbageBoard.prototype.initialCut = function () {
     player2.isCrib = true;
     this.currentPlayer = 1;
   }
+
   setTimeout(() => {
-    this.changePhase = true;
+    this.phase = cardSelectionPhase;
     render(this);
-  }, 2000);
+  }, 4000);
 };
 
 CribbageBoard.prototype.cardSelectionPhase = function () {
   this.emptyHand();
-
   this.dealCards(6);
-  // console.log(this);
+};
+
+CribbageBoard.prototype.addToCrib = function (event) {
+  if (board.phase != cardSelectionPhase) {
+    return;
+  }
+  if (event.target.classList[0] != "card") {
+    return;
+  }
+  let player = 0;
+  if (this.id === "hand2") {
+    player++;
+  }
+  if (board.players[player].hand.length === 4) {
+    return;
+  }
+  let suit = event.target.classList[1];
+  let rank = event.target.classList[2];
+  let card = board.findCard(player, suit, parseInt(rank));
+  let index = board.players[player].hand.indexOf(card);
+  let add = board.players[player].hand.splice(index, 1);
+  let playerCrib = board.findCribPlayer().crib;
+  playerCrib.push(add[0]);
+  renderUI(board);
+  if (board.findCribPlayer().crib.length === 4) {
+    board.phase = midTurnCut;
+    render(board);
+  }
+};
+
+CribbageBoard.prototype.midTurnCut = function () {
+  this.deck.shuffle();
+  let midTurnCutCard = this.deck.draw(1);
+  this.cut = [];
+  this.cut.push(midTurnCutCard[0].toCardCode());
 };
 
 function Player(name) {
@@ -197,26 +225,26 @@ Player.prototype.getCurrentScore = function () {
 function reset(board) {
   board.phaseNum = 0;
   board.emptyHand();
-  board.changePhase = true;
+  board.phase = initialCut;
   render(board);
 }
 
 function render(board) {
-  if (board.changePhase) {
-    board.phase = phases[board.phaseNum];
-    board.phaseNum++;
-  }
+  console.log(board.phase);
+
   if (board.phase === initialCut) {
-    board.changePhase = true;
     board.initialCut();
     renderUI(board);
   }
-  console.log(board.phase);
-  console.log(board.players);
   if (board.phase === cardSelectionPhase) {
-    board.changePhase = true;
     board.cardSelectionPhase();
     renderUI(board);
+  }
+  if (board.phase === midTurnCut) {
+    board.midTurnCut();
+    setTimeout(() => {
+      renderUI(board);
+    }, 1500);
   }
 }
 
@@ -257,7 +285,9 @@ function renderUI(board) {
     currentPlayer.hand.forEach((card) => {
       currentPlayerHandUI.insertAdjacentHTML(
         "beforeend",
-        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
+        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${
+          card.suit
+        } ${card.rank}" />`
       );
     });
   }
@@ -281,7 +311,14 @@ function renderUI(board) {
       `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
     );
   });
+  document.querySelector(
+    ".cut-card"
+  ).children[0].src = `Pictures/card_${board.cut[0]}.png`;
 }
 
 const board = new CribbageBoard();
+
 reset(board);
+
+document.querySelector("#hand1").addEventListener("click", board.addToCrib);
+document.querySelector("#hand2").addEventListener("click", board.addToCrib);
