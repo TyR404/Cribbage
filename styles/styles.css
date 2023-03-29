@@ -10,6 +10,7 @@ body {
   text-align: center;
   display: grid;
   grid-template-areas: "main main main main main aside";
+  padding: 0 5% 5%;
 }
 main {
   grid-area: main;
@@ -17,7 +18,7 @@ main {
 
 table {
   display: inline-block;
-  background-color: rgb(117, 117, 117);
+  background-image: url(/Pictures/board-background.jpg);
   padding: 2rem;
   border-collapse: separate;
   border-spacing: 0.2rem;
@@ -36,11 +37,11 @@ td {
   width: 2em;
   height: 2em;
   aspect-ratio: 1 / 1;
-  background-color: #eeeeee;
+  background-color: #2c1500;
   margin: 1rem;
   border-radius: 1rem;
   position: relative;
-  box-shadow: inset 1px 5px 5px black;
+  box-shadow: inset 1px 5px 5px rgb(0, 0, 0);
 }
 
 .player1 .scored {
@@ -53,9 +54,6 @@ td {
 .player1-details {
   background-color: hsl(0, 100%, 73%);
 }
-.player2-details {
-  background-color: hsl(203, 100%, 73%);
-}
 
 .details {
   width: 75%;
@@ -65,6 +63,12 @@ td {
   display: flex;
   box-shadow: 1px 5px 5px black;
 }
+
+.player2-details {
+  background-color: hsl(203, 100%, 73%);
+  margin-bottom: 5em;
+}
+
 .info {
   text-align: left;
   width: 100%;
@@ -81,14 +85,22 @@ td {
 }
 
 aside {
+  color: #eeeeee;
   grid-area: aside;
   align-self: center;
+  margin-top: -15em;
+  background-image: linear-gradient(
+    to left bottom,
+    #4b4b4c,
+    #393939,
+    #282828,
+    #181718,
+    #000000
+  );
 }
 
 .crib {
-  background-color: rgb(117, 117, 117);
   padding: 2rem;
-  border-radius: 1rem;
   box-shadow: 1px 5px 5px black;
 }
 
@@ -121,12 +133,37 @@ i {
 }
 
 .cut-card-container {
-  background-color: rgb(117, 117, 117);
-  border-radius: 1rem;
   justify-content: center;
   align-items: center;
   display: flex;
   flex-direction: column;
   padding: 1rem;
   gap: 1rem;
+}
+
+.button {
+  width: 20em;
+  height: 8.5em;
+  display: block;
+  border-radius: 2em;
+  margin: auto;
+  background-image: linear-gradient(
+    to left bottom,
+    #4b4b4c,
+    #393939,
+    #282828,
+    #181718,
+    #000000
+  );
+  color: #eeeeee;
+}
+
+.player1 i {
+  filter: invert(11%) sepia(78%) saturate(6483%) hue-rotate(2deg)
+    brightness(90%) contrast(115%);
+}
+
+.player2 i {
+  filter: invert(11%) sepia(68%) saturate(3874%) hue-rotate(252deg)
+    brightness(133%) contrast(170%);
 }
