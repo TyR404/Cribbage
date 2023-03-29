@@ -10,7 +10,7 @@ body {
   text-align: center;
   display: grid;
   grid-template-areas: "main main main main main aside";
-  padding: 0 5% 5%;
+  padding: 5%;
 }
 main {
   grid-area: main;
@@ -88,7 +88,6 @@ aside {
   color: #eeeeee;
   grid-area: aside;
   align-self: center;
-  margin-top: -15em;
   background-image: linear-gradient(
     to left bottom,
     #4b4b4c,
@@ -142,10 +141,9 @@ i {
 }
 
 .button {
-  width: 20em;
-  height: 8.5em;
-  display: block;
-  border-radius: 2em;
+  width: 6em;
+  height: 3em;
+  border-radius: 1em;
   margin: auto;
   background-image: linear-gradient(
     to left bottom,
@@ -156,6 +154,11 @@ i {
     #000000
   );
   color: #eeeeee;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  display: flex;
+  text-transform: uppercase;
 }
 
 .player1 i {

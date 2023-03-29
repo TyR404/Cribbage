@@ -1,3 +1,4 @@
+const start = "start";
 const initialCut = "initialCut";
 const cardSelectionPhase = "cardSelection";
 const midTurnCut = "midTurnCut";
@@ -32,7 +33,10 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [
+      this.cards[randomIndex],
+      this.cards[currentIndex],
+    ];
   }
 };
 
@@ -57,7 +61,21 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
-  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const cardNames = [
+    "A",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K",
+  ];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -185,6 +203,8 @@ CribbageBoard.prototype.midTurnCut = function () {
   this.cut.push(midTurnCutCard[0].toCardCode());
 };
 
+CribbageBoard.prototype.pegging = function () {};
+
 function Player(name) {
   this.name = name;
   this.hand = [];
@@ -253,7 +273,12 @@ Player.prototype.scoreHand = function (hand) {
     }
   }
 
-  function lookForPairsAndFifteens(subset, insertedArray, allFifteens, allPairs) {
+  function lookForPairsAndFifteens(
+    subset,
+    insertedArray,
+    allFifteens,
+    allPairs
+  ) {
     let array = [...insertedArray];
     // stops recursion when the array is empty and no more values can be added
     if (array.length === 0) {
@@ -285,20 +310,28 @@ Player.prototype.scoreHand = function (hand) {
   // check for same suit (array.every())
   // check for jacks with the same suit as the cut card
 };
+
 Player.prototype.getCurrentScore = function () {
   // return this.score
 };
 
+function buttonHandler() {
+  if (board.phase === midTurnCut) {
+    board.midTurnCut();
+    board.phase = peggingPhase;
+    render(board);
+  }
+  return;
+}
+
 function reset(board) {
-  board.phaseNum = 0;
-  board.emptyHand();
   board.phase = initialCut;
+  board.emptyHand();
   render(board);
 }
 
 function render(board) {
   console.log(board.phase);
-
   if (board.phase === initialCut) {
     board.initialCut();
     renderUI(board);
@@ -308,10 +341,11 @@ function render(board) {
     renderUI(board);
   }
   if (board.phase === midTurnCut) {
-    board.midTurnCut();
-    setTimeout(() => {
-      renderUI(board);
-    }, 1500);
+    renderUI(board);
+  }
+  if (board.phase === peggingPhase) {
+    board.pegging();
+    renderUI(board);
   }
 }
 
@@ -322,8 +356,10 @@ function renderUI(board) {
     const currentPlayer = board.players[i];
     const currentPlayerUI = document.querySelector(`.player${i + 1}-details`);
     // HANDLES EACH PLAYERS NAME AND SCORE
-    currentPlayerUI.querySelector(".player-name").textContent = currentPlayer.name;
-    currentPlayerUI.querySelector(".player-score").textContent = currentPlayer.score;
+    currentPlayerUI.querySelector(".player-name").textContent =
+      currentPlayer.name;
+    currentPlayerUI.querySelector(".player-score").textContent =
+      currentPlayer.score;
 
     // CHANGES THE POINTS ON THE VISUAL BOARD
     const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
@@ -334,13 +370,19 @@ function renderUI(board) {
       currentRowElementsUI[i].classList.add("scored");
     }
     console.log(allPegs);
-    if (currentPlayer.score + 1 > allPegs[allPegs.length - 1].parentElement.cellIndex) {
+    if (
+      currentPlayer.score + 1 >
+      allPegs[allPegs.length - 1].parentElement.cellIndex
+    ) {
       if (allPegs.length >= 2) {
         // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
         allPegs[0].remove();
       }
       // adds pin at the last score
-      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML(
+        "beforeend",
+        `<i class="fa-sharp fa-solid fa-map-pin"></i>`
+      );
     }
 
     // HANDLES EACH PLAYERS HANDS
@@ -351,24 +393,43 @@ function renderUI(board) {
     currentPlayer.hand.forEach((card) => {
       currentPlayerHandUI.insertAdjacentHTML(
         "beforeend",
-        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${card.suit} ${card.rank}" />`
+        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${
+          card.suit
+        } ${card.rank}" />`
       );
     });
   }
   // DEALS WITH CRIB
   const cribUI = document.querySelector(".crib");
-  const currentCribOwner = board.players.find((player) => player.isCrib === true);
+  const currentCribOwner = board.players.find(
+    (player) => player.isCrib === true
+  );
   // changes crib owner
-  cribUI.querySelector(".crib-owner").textContent = `It is ${currentCribOwner.name}'s Crib`;
+  cribUI.querySelector(
+    ".crib-owner"
+  ).textContent = `It is ${currentCribOwner.name}'s Crib`;
 
   const cribHandUI = cribUI.querySelector(".crib-hand");
   // clears old cards
   cribHandUI.innerHTML = "";
   // adds new crib cards
   currentCribOwner.crib.forEach((card) => {
-    cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
+    cribHandUI.insertAdjacentHTML(
+      "beforeend",
+      `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
+    );
   });
-  document.querySelector(".cut-card").children[0].src = `Pictures/card_${board.cut[0]}.png`;
+  document.querySelector(
+    ".cut-card"
+  ).children[0].src = `Pictures/card_${board.cut[0]}.png`;
+  if (board.phase === midTurnCut) {
+    document.querySelector(".button").style.display = "flex";
+    document.querySelector(".button").textContent = "cut";
+    document.querySelector("aside").style.marginTop = "-11em";
+  } else {
+    document.querySelector(".button").style.display = "none";
+    document.querySelector("aside").style.marginTop = "-4em";
+  }
 }
 
 const board = new CribbageBoard();
@@ -377,3 +438,4 @@ reset(board);
 
 document.querySelector("#hand1").addEventListener("click", board.addToCrib);
 document.querySelector("#hand2").addEventListener("click", board.addToCrib);
+document.querySelector(".button").addEventListener("click", buttonHandler);
