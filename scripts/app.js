@@ -1,3 +1,4 @@
+const start = "start";
 const initialCut = "initialCut";
 const cardSelectionPhase = "cardSelection";
 const midTurnCut = "midTurnCut";
@@ -185,6 +186,8 @@ CribbageBoard.prototype.midTurnCut = function () {
   this.cut.push(midTurnCutCard[0].toCardCode());
 };
 
+CribbageBoard.prototype.pegging = function () {};
+
 function Player(name) {
   this.name = name;
   this.hand = [];
@@ -338,16 +341,23 @@ Player.prototype.getCurrentScore = function () {
   // return this.score
 };
 
+function buttonHandler() {
+  if (board.phase === midTurnCut) {
+    board.midTurnCut();
+    board.phase = peggingPhase;
+    render(board);
+  }
+  return;
+}
+
 function reset(board) {
-  board.phaseNum = 0;
-  board.emptyHand();
   board.phase = initialCut;
+  board.emptyHand();
   render(board);
 }
 
 function render(board) {
   console.log(board.phase);
-
   if (board.phase === initialCut) {
     board.initialCut();
     renderUI(board);
@@ -357,10 +367,11 @@ function render(board) {
     renderUI(board);
   }
   if (board.phase === midTurnCut) {
-    board.midTurnCut();
-    setTimeout(() => {
-      renderUI(board);
-    }, 1500);
+    renderUI(board);
+  }
+  if (board.phase === peggingPhase) {
+    board.pegging();
+    renderUI(board);
   }
 }
 
@@ -417,6 +428,14 @@ function renderUI(board) {
     cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
   });
   document.querySelector(".cut-card").children[0].src = `Pictures/card_${board.cut[0]}.png`;
+  if (board.phase === midTurnCut) {
+    document.querySelector(".button").style.display = "flex";
+    document.querySelector(".button").textContent = "cut";
+    document.querySelector("aside").style.marginTop = "-11em";
+  } else {
+    document.querySelector(".button").style.display = "none";
+    document.querySelector("aside").style.marginTop = "-4em";
+  }
 }
 
 const board = new CribbageBoard();
@@ -425,3 +444,4 @@ reset(board);
 
 document.querySelector("#hand1").addEventListener("click", board.addToCrib);
 document.querySelector("#hand2").addEventListener("click", board.addToCrib);
+document.querySelector(".button").addEventListener("click", buttonHandler);
