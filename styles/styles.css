@@ -66,7 +66,6 @@ td {
 
 .player2-details {
   background-color: hsl(203, 100%, 73%);
-  margin-bottom: 5em;
 }
 
 .info {
@@ -169,4 +168,38 @@ i {
 .player2 i {
   filter: invert(11%) sepia(68%) saturate(3874%) hue-rotate(252deg)
     brightness(133%) contrast(170%);
+}
+
+.pegging {
+  width: 30em;
+  height: 19em;
+  background-image: linear-gradient(
+    to left bottom,
+    #4b4b4c,
+    #393939,
+    #282828,
+    #181718,
+    #000000
+  );
+  margin: auto;
+  margin-bottom: 1em;
+  text-align: left;
+  padding-left: 5%;
+  color: #eeeeee;
+  justify-content: center;
+  align-items: center;
+  padding-right: 5%;
+}
+
+.pegging h3 {
+  width: 5em;
+  text-align: center;
+}
+
+.pile {
+  width: 10em;
+}
+
+.pegging-score {
+  font-size: 40px;
 }

@@ -3,6 +3,8 @@ const initialCut = "initialCut";
 const cardSelectionPhase = "cardSelection";
 const midTurnCut = "midTurnCut";
 const peggingPhase = "pegging";
+const countingHandScore = "counting";
+const countingCribScore = "CribScore";
 
 function Deck() {
   this.cards = [];
@@ -61,6 +63,9 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
+  if (this.suit === "BACK") {
+    return "BACK";
+  }
   const cardNames = [
     "A",
     "2",
@@ -82,16 +87,21 @@ Card.prototype.toCardCode = function () {
 Card.prototype.valueOf = function () {
   return this.rank;
 };
+let back = new Card("BACK", "BACK");
 
 function CribbageBoard() {
   this.players = [new Player("player1"), new Player("player2")];
   this.deck = new Deck();
   // whose turn it is
-  this.currentPlayer = 0;
+  this.turn = 0;
   this.phase = "";
-  this.cut = ["BACK"];
+  this.cut = [back];
+  this.pile1 = [back];
+  this.pile1Card = 0;
+  this.pile2 = [back];
+  this.pile2Card = 0;
+  this.peggingScore = 0;
 }
-
 CribbageBoard.prototype.emptyHand = function () {
   let player1 = this.players[0];
   let player2 = this.players[1];
@@ -151,10 +161,9 @@ CribbageBoard.prototype.initialCut = function () {
 
   if (player1hand[0].rank < player2hand[0].rank) {
     player1.isCrib = true;
-    this.currentPlayer = 0;
+    this.turn = 1;
   } else {
     player2.isCrib = true;
-    this.currentPlayer = 1;
   }
 
   setTimeout(() => {
@@ -200,10 +209,71 @@ CribbageBoard.prototype.midTurnCut = function () {
   this.deck.shuffle();
   let midTurnCutCard = this.deck.draw(1);
   this.cut = [];
-  this.cut.push(midTurnCutCard[0].toCardCode());
+  this.cut.push(midTurnCutCard[0]);
 };
 
-CribbageBoard.prototype.pegging = function () {};
+CribbageBoard.prototype.pegging = function (event) {
+  if (board.phase != peggingPhase) {
+    return;
+  }
+  console.log(`player${board.turn + 1}'s Turn`);
+
+  if (event.target.parentElement.id === `hand${board.turn + 1}`) {
+    let suit = event.target.classList[1];
+    let rank = event.target.classList[2];
+    let card = board.findCard(board.turn, suit, parseInt(rank));
+    let index = board.players[board.turn].hand.indexOf(card);
+    let add = board.players[board.turn].hand.splice(index, 1);
+    if (board.turn === 0) {
+      board.pile1.push(add[0]);
+      board.pile1Card++;
+    } else {
+      board.pile2.push(add[0]);
+      board.pile2Card++;
+    }
+
+    if (add[0].faceCard) {
+      board.peggingScore = board.peggingScore + 10;
+    } else {
+      board.peggingScore = board.peggingScore + add[0].rank;
+    }
+
+    if (board.peggingScore === 15) {
+      board.players[board.turn].score = board.players[board.turn].score + 2;
+    }
+    if (board.peggingScore === 31) {
+      board.players[board.turn].score = board.players[board.turn].score + 2;
+    }
+    renderUI(board);
+    if (board.turn === 0) {
+      board.turn = 1;
+    } else {
+      board.turn = 0;
+    }
+  }
+
+  let player1 = board.players[0];
+  let player2 = board.players[1];
+
+  let player1hand = player1.hand;
+  let player2hand = player2.hand;
+
+  if (player1hand.length === 0 && player2hand.length === 0) {
+    for (let i = 0; i < 4; i++) {
+      let cardToPutBack1 = board.pile1.pop();
+      player1hand.push(cardToPutBack1);
+
+      let cardToPutBack2 = board.pile2.pop();
+      player2hand.push(cardToPutBack2);
+
+      board.pile1Card = 0;
+      board.pile2Card = 0;
+      renderUI(board);
+    }
+    board.phase = countingHandScore;
+    render(board);
+  }
+};
 
 function Player(name) {
   this.name = name;
@@ -344,7 +414,9 @@ function render(board) {
     renderUI(board);
   }
   if (board.phase === peggingPhase) {
-    board.pegging();
+    renderUI(board);
+  }
+  if (board.phase === countingHandScore) {
     renderUI(board);
   }
 }
@@ -421,14 +493,38 @@ function renderUI(board) {
   });
   document.querySelector(
     ".cut-card"
-  ).children[0].src = `Pictures/card_${board.cut[0]}.png`;
+  ).children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
   if (board.phase === midTurnCut) {
     document.querySelector(".button").style.display = "flex";
     document.querySelector(".button").textContent = "cut";
     document.querySelector("aside").style.marginTop = "-11em";
+    document.querySelector("body").style.paddingBottom = "0%";
+    document.querySelector(".player2-details").style.marginBottom = "5em";
   } else {
     document.querySelector(".button").style.display = "none";
     document.querySelector("aside").style.marginTop = "-4em";
+    document.querySelector(".player2-details").style.marginBottom = "0";
+  }
+
+  if (board.phase === peggingPhase) {
+    document.querySelector(".pegging").style.display = "flex";
+    document.querySelector("body").style.paddingTop = "0";
+    document.querySelector(
+      ".player1Pile"
+    ).children[0].src = `/Pictures/card_${board.pile1[
+      board.pile1Card
+    ].toCardCode()}.png`;
+    document.querySelector(
+      ".player2Pile"
+    ).children[0].src = `/Pictures/card_${board.pile2[
+      board.pile2Card
+    ].toCardCode()}.png`;
+    document.querySelector(
+      ".pegging-score"
+    ).children[0].innerHTML = `${board.peggingScore}`;
+  } else {
+    document.querySelector(".pegging").style.display = "none";
+    document.querySelector("body").style.paddingTop = "5%";
   }
 }
 
@@ -439,3 +535,5 @@ reset(board);
 document.querySelector("#hand1").addEventListener("click", board.addToCrib);
 document.querySelector("#hand2").addEventListener("click", board.addToCrib);
 document.querySelector(".button").addEventListener("click", buttonHandler);
+document.querySelector("#hand1").addEventListener("click", board.pegging);
+document.querySelector("#hand2").addEventListener("click", board.pegging);
