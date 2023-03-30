@@ -63,9 +63,6 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
-  if (this.suit === "BACK") {
-    return "BACK";
-  }
   const cardNames = [
     "A",
     "2",
@@ -283,103 +280,154 @@ function Player(name) {
   this.isCrib = false;
 }
 // have hand so we can add the crib using the same function?
-Player.prototype.scoreHand = function (hand) {
+Player.prototype.scoreHand = function (hand, extra = []) {
   // This and the pegging function will be pain
   // check for 15s (How? idk)
-  function calculateScoreOfHand(array) {
-    // holds all combination that past the given tests
-    let allFifteens = [];
-    let allPairs = [];
-    let allRuns = [];
+  let fullHand = [...hand];
+  extra.forEach((card) => {
+    fullHand.push(card);
+  });
 
-    // calls recursion function
-    lookForPairsAndFifteens([], [...array], allFifteens, allPairs);
+  // holds all combination that past the given tests
+  let allFifteens = [];
+  let allPairs = [];
+  let allRuns = [];
+  let sameSuit = [];
 
-    // // looks for runs
-    lookForRuns([...array], allRuns);
+  // calls recursion function
+  lookForPairsAndFifteens([], [...fullHand], allFifteens, allPairs);
 
-    // log all the sets the passes the test
-    console.log(allRuns);
-    console.log(allFifteens);
-    console.log(allPairs);
+  // // looks for runs
+  lookForRuns([...fullHand], allRuns);
+
+  lookForSameSuit([...hand], [...extra], sameSuit);
+
+  let points = 0;
+
+  allRuns.forEach((run) => {
+    points += run.length;
+  });
+  allFifteens.forEach((fifteen) => {
+    points += 2;
+  });
+  allPairs.forEach((pair) => {
+    points += 2;
+  });
+  sameSuit.forEach((card) => {
+    points++;
+  });
+  if (checkForJack([...hand], [...extra]) === true) {
+    points++;
   }
-
-  function lookForRuns(array, allRuns) {
-    // sorts array from lowest value to highest
-    array.sort((a, b) => a - b);
-
-    // holds current run
-    let currentRun = [];
-    // hold if there are duplicate runs (like if you have 7789, that would be 2 runs of 789)
-    let runAmount = 1;
-    // for every element in the array
-    for (let i = 0; i < array.length; i++) {
-      // if the current array element doesn't equal the previous one
-      if (array[i] !== array[i - 1]) {
-        // if its the last element in the array
-        if (i === array.length - 1) {
-          // add it to the current run
-          currentRun.push(array[i]);
-        }
-        // if the current element isnt one more that the previous one or if its the last element in the array
-        if (array[i] !== array[i - 1] + 1 || i === array.length - 1) {
-          // checks if the current run is 3 or more long (78 is not a run but 789 is)
-          if (currentRun.length >= 3) {
-            // pushes the current run into all runs as many times as there is duplicates (12334 => 1234, 1234)
-            for (let j = 0; j < runAmount; j++) {
-              allRuns.push([...currentRun]);
-            }
-          }
-          // resets run amount and the current run
-          runAmount = 1;
-          currentRun = [];
-        }
-        // adds the current element to the current run
-        currentRun.push(array[i]);
-      } else {
-        // if the current array element equals the previous one, then adds one to the run counter
-        runAmount++;
-      }
-    }
-  }
-
-  function lookForPairsAndFifteens(
-    subset,
-    insertedArray,
-    allFifteens,
-    allPairs
-  ) {
-    let array = [...insertedArray];
-    // stops recursion when the array is empty and no more values can be added
-    if (array.length === 0) {
-      return;
-    }
-    // removes the first item in the input and saves it
-    let newItem = array.splice(0, 1);
-    // recurs WITHOUT adding the new item
-    lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
-    // recurs WITH adding the new item
-    subset.push(newItem[0]);
-    lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
-
-    // If the current subset totals to 15, or anything else we may like
-    if (subset.reduce((accumulator, value) => (accumulator += value)) === 15) {
-      // adds the current subset to the final array
-      allFifteens.push([...subset]);
-      // stops recursion
-      return;
-    }
-    // look for pairs
-    if (subset.length === 2 && subset.every((value) => value === subset[0])) {
-      allPairs.push([...subset]);
-    }
-  }
+  console.log(allRuns);
+  console.log(allFifteens);
+  console.log(allPairs);
+  console.log(sameSuit);
+  console.log(points);
+  return points;
   // We can edit this function later, currently it only takes in an array of numbers
   // calculateFifteens([10, 5, 8, 2, 5]);
 
   // check for same suit (array.every())
   // check for jacks with the same suit as the cut card
 };
+
+function checkForJack(hand, extra = []) {
+  if (hand.some((card) => card.rank === 11 && extra[0].suit === card.suit)) {
+    return true;
+  }
+  return false;
+}
+
+function lookForSameSuit(hand, extra = [], sameSuit) {
+  if (hand.every((card) => card.suit === hand[0].suit)) {
+    hand.forEach((card) => sameSuit.push(card));
+
+    extra.forEach((card) => {
+      if (card.suit === hand[0].suit) {
+        sameSuit.push(card);
+      }
+    });
+  }
+}
+
+function lookForRuns(array, allRuns) {
+  // sorts array from lowest value to highest
+  array.sort((a, b) => a.rank - b.rank);
+
+  // holds current run
+  let currentRun = [];
+  // hold if there are duplicate runs (like if you have 7789, that would be 2 runs of 789)
+  let runAmount = 1;
+  // for every element in the array
+  for (let i = 0; i < array.length; i++) {
+    if (i === 0) {
+      currentRun.push(array[i]);
+      // adds the current element to the current run
+      continue;
+    }
+    if (array[i].rank === array[i - 1].rank) {
+      // if the current array element equals the previous one, then adds one to the run counter
+      runAmount *= 2;
+      continue;
+    }
+
+    // if the current element isnt one more that the previous one or if its the last element in the array
+    if (array[i].rank !== array[i - 1].rank + 1 || i === array.length - 1) {
+      // if its the last element in the array
+      if (array[i].rank === array[i - 1].rank + 1 && i === array.length - 1) {
+        // add it to the current run
+        currentRun.push(array[i]);
+      }
+      // checks if the current run is 3 or more long (78 is not a run but 789 is)
+      if (currentRun.length >= 3) {
+        // pushes the current run into all runs as many times as there is duplicates (12334 => 1234, 1234)
+        for (let j = 0; j < runAmount; j++) {
+          allRuns.push([...currentRun]);
+        }
+      }
+      // resets run amount and the current run
+      runAmount = 1;
+      currentRun = [];
+    }
+    currentRun.push(array[i]);
+  }
+}
+
+function lookForPairsAndFifteens(subset, insertedArray, allFifteens, allPairs) {
+  let array = [...insertedArray];
+  // stops recursion when the array is empty and no more values can be added
+  if (array.length === 0) {
+    return;
+  }
+  // removes the first item in the input and saves it
+  let newItem = array.splice(0, 1);
+  // recurs WITHOUT adding the new item
+  lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
+  // recurs WITH adding the new item
+  subset.push(newItem[0]);
+  lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
+
+  // If the current subset totals to 15, or anything else we may like
+  if (
+    subset.reduce(
+      (accumulator, card) =>
+        card.faceCard === true
+          ? (accumulator += 10)
+          : (accumulator += card.rank),
+      0
+    ) === 15
+  ) {
+    // adds the current subset to the final array
+    allFifteens.push([...subset]);
+    // stops recursion
+    return;
+  }
+  // look for pairs
+  if (subset.length === 2 && subset[0].rank === subset[1].rank) {
+    allPairs.push([...subset]);
+  }
+}
 
 Player.prototype.getCurrentScore = function () {
   // return this.score
@@ -441,7 +489,6 @@ function renderUI(board) {
     for (let i = 0; i < currentPlayer.score + 2; i++) {
       currentRowElementsUI[i].classList.add("scored");
     }
-    console.log(allPegs);
     if (
       currentPlayer.score + 1 >
       allPegs[allPegs.length - 1].parentElement.cellIndex
@@ -493,7 +540,7 @@ function renderUI(board) {
   });
   document.querySelector(
     ".cut-card"
-  ).children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
+  ).children[0].src = `Pictures/card_${board.cut[0]}.png`;
   if (board.phase === midTurnCut) {
     document.querySelector(".button").style.display = "flex";
     document.querySelector(".button").textContent = "cut";
