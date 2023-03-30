@@ -63,6 +63,9 @@ function Card(suit, rank) {
 }
 
 Card.prototype.toCardCode = function () {
+  if (this.suit === "BACK") {
+    return "BACK";
+  }
   const cardNames = [
     "A",
     "2",
@@ -540,7 +543,7 @@ function renderUI(board) {
   });
   document.querySelector(
     ".cut-card"
-  ).children[0].src = `Pictures/card_${board.cut[0]}.png`;
+  ).children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
   if (board.phase === midTurnCut) {
     document.querySelector(".button").style.display = "flex";
     document.querySelector(".button").textContent = "cut";
