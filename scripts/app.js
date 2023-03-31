@@ -35,10 +35,7 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [
-      this.cards[randomIndex],
-      this.cards[currentIndex],
-    ];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
   }
 };
 
@@ -66,21 +63,7 @@ Card.prototype.toCardCode = function () {
   if (this.suit === "BACK") {
     return "BACK";
   }
-  const cardNames = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-  ];
+  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -101,6 +84,7 @@ function CribbageBoard() {
   this.pile2 = [back];
   this.pile2Card = 0;
   this.peggingScore = 0;
+  this.currentPeggingHand = [];
 }
 CribbageBoard.prototype.emptyHand = function () {
   let player1 = this.players[0];
@@ -222,33 +206,74 @@ CribbageBoard.prototype.pegging = function (event) {
     let suit = event.target.classList[1];
     let rank = event.target.classList[2];
     let card = board.findCard(board.turn, suit, parseInt(rank));
-    let index = board.players[board.turn].hand.indexOf(card);
-    let add = board.players[board.turn].hand.splice(index, 1);
-    if (board.turn === 0) {
-      board.pile1.push(add[0]);
-      board.pile1Card++;
-    } else {
-      board.pile2.push(add[0]);
-      board.pile2Card++;
-    }
+    let points = card.faceCard ? 10 : card.rank;
 
-    if (add[0].faceCard) {
-      board.peggingScore = board.peggingScore + 10;
+    // checks if the smallest card in the current players hand is too big to be added
+    if (points > 31 - board.peggingScore) {
+      console.log(`Card too high, choose another`);
     } else {
-      board.peggingScore = board.peggingScore + add[0].rank;
-    }
+      let index = board.players[board.turn].hand.indexOf(card);
+      let add = board.players[board.turn].hand.splice(index, 1);
 
-    if (board.peggingScore === 15) {
-      board.players[board.turn].score = board.players[board.turn].score + 2;
-    }
-    if (board.peggingScore === 31) {
-      board.players[board.turn].score = board.players[board.turn].score + 2;
-    }
-    renderUI(board);
-    if (board.turn === 0) {
-      board.turn = 1;
-    } else {
-      board.turn = 0;
+      if (board.turn === 0) {
+        board.pile1.push(add[0]);
+        board.pile1Card++;
+      } else {
+        board.pile2.push(add[0]);
+        board.pile2Card++;
+      }
+
+      if (add[0].faceCard) {
+        board.peggingScore = board.peggingScore + 10;
+      } else {
+        board.peggingScore = board.peggingScore + add[0].rank;
+      }
+
+      if (board.peggingScore === 15) {
+        board.players[board.turn].score = board.players[board.turn].score + 2;
+      }
+      if (board.peggingScore === 31) {
+        board.players[board.turn].score = board.players[board.turn].score + 2;
+        board.peggingScore = 0;
+      }
+      renderUI(board);
+      board.currentPeggingHand.push(card);
+      let potentialPairs = [];
+      let amountOfPairs = 0;
+
+      for (let i = 0; i < board.currentPeggingHand.length; i++) {
+        potentialPairs.push(board.currentPeggingHand[board.currentPeggingHand.length - i - 1]);
+        if (potentialPairs.length >= 2) {
+          let allPairs = [];
+          lookForPairsAndFifteens([], [...potentialPairs], [], allPairs);
+          if (allPairs.length <= amountOfPairs) {
+            break;
+          }
+          amountOfPairs = allPairs.length;
+        }
+      }
+
+      board.players[board.turn].score += amountOfPairs * 2;
+
+      let potentialRun = [...board.currentPeggingHand];
+      let runLength = 0;
+
+      for (let i = 0; i < board.currentPeggingHand.length; i++) {
+        if (potentialRun.length >= 3) {
+          let allRuns = [];
+          lookForRuns([...potentialRun], allRuns, false);
+          if (allRuns.length !== 0) {
+            runLength = allRuns[0].length;
+            break;
+          }
+          potentialRun.shift();
+        }
+      }
+      board.players[board.turn].score += runLength;
+
+      renderUI(board);
+      changePlayerTurn();
+      checkIfCanPlay();
     }
   }
 
@@ -273,6 +298,48 @@ CribbageBoard.prototype.pegging = function (event) {
     board.phase = countingHandScore;
     render(board);
   }
+
+  function changePlayerTurn() {
+    if (board.turn === 0) {
+      board.turn = 1;
+    } else {
+      board.turn = 0;
+    }
+  }
+
+  function checkIfCanPlay() {
+    // if next player cannot play
+    let temporaryHand = [...board.players[board.turn].hand];
+    temporaryHand.sort((a, b) => a - b);
+    if (board.players[board.turn].hand.length === 0 || 31 - board.peggingScore < getRank(temporaryHand[0])) {
+      console.log(`${board.players[board.turn].name} cannot play, switching players`);
+      changePlayerTurn();
+      // check if current player can play
+      let temporaryHand = [...board.players[board.turn].hand];
+      temporaryHand.sort((a, b) => a - b);
+      if (board.players[board.turn].hand.length === 0 || 31 - board.peggingScore < getRank(temporaryHand[0])) {
+        // if not, set score to 0 and award points
+        console.log(`${board.players[board.turn].name} cannot play, +1 point for last card`);
+        board.players[board.turn].score++;
+        board.peggingScore = 0;
+        board.currentPeggingHand = [];
+        renderUI(board);
+        changePlayerTurn();
+      }
+    }
+  }
+  function getRank(card) {
+    return card.faceCard ? 10 : card.rank;
+  }
+};
+
+CribbageBoard.prototype.finalScoring = function () {
+  this.players.forEach((player) => {
+    player.score += player.scoreHand(player.hand, this.cut);
+    if (player.isCrib) {
+      player.score += player.scoreHand(player.crib, this.cut);
+    }
+  });
 };
 
 function Player(name) {
@@ -354,7 +421,7 @@ function lookForSameSuit(hand, extra = [], sameSuit) {
   }
 }
 
-function lookForRuns(array, allRuns) {
+function lookForRuns(array, allRuns, useRunAmount = true) {
   // sorts array from lowest value to highest
   array.sort((a, b) => a.rank - b.rank);
 
@@ -369,7 +436,7 @@ function lookForRuns(array, allRuns) {
       // adds the current element to the current run
       continue;
     }
-    if (array[i].rank === array[i - 1].rank) {
+    if (array[i].rank === array[i - 1].rank && useRunAmount) {
       // if the current array element equals the previous one, then adds one to the run counter
       runAmount *= 2;
       continue;
@@ -381,6 +448,9 @@ function lookForRuns(array, allRuns) {
       if (array[i].rank === array[i - 1].rank + 1 && i === array.length - 1) {
         // add it to the current run
         currentRun.push(array[i]);
+      } else if (useRunAmount === false) {
+        allRuns = [];
+        return;
       }
       // checks if the current run is 3 or more long (78 is not a run but 789 is)
       if (currentRun.length >= 3) {
@@ -412,15 +482,7 @@ function lookForPairsAndFifteens(subset, insertedArray, allFifteens, allPairs) {
   lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
 
   // If the current subset totals to 15, or anything else we may like
-  if (
-    subset.reduce(
-      (accumulator, card) =>
-        card.faceCard === true
-          ? (accumulator += 10)
-          : (accumulator += card.rank),
-      0
-    ) === 15
-  ) {
+  if (subset.reduce((accumulator, card) => (card.faceCard === true ? (accumulator += 10) : (accumulator += card.rank)), 0) === 15) {
     // adds the current subset to the final array
     allFifteens.push([...subset]);
     // stops recursion
@@ -468,6 +530,7 @@ function render(board) {
     renderUI(board);
   }
   if (board.phase === countingHandScore) {
+    board.finalScoring();
     renderUI(board);
   }
 }
@@ -479,10 +542,8 @@ function renderUI(board) {
     const currentPlayer = board.players[i];
     const currentPlayerUI = document.querySelector(`.player${i + 1}-details`);
     // HANDLES EACH PLAYERS NAME AND SCORE
-    currentPlayerUI.querySelector(".player-name").textContent =
-      currentPlayer.name;
-    currentPlayerUI.querySelector(".player-score").textContent =
-      currentPlayer.score;
+    currentPlayerUI.querySelector(".player-name").textContent = currentPlayer.name;
+    currentPlayerUI.querySelector(".player-score").textContent = currentPlayer.score;
 
     // CHANGES THE POINTS ON THE VISUAL BOARD
     const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
@@ -492,19 +553,13 @@ function renderUI(board) {
     for (let i = 0; i < currentPlayer.score + 2; i++) {
       currentRowElementsUI[i].classList.add("scored");
     }
-    if (
-      currentPlayer.score + 1 >
-      allPegs[allPegs.length - 1].parentElement.cellIndex
-    ) {
+    if (currentPlayer.score + 1 > allPegs[allPegs.length - 1].parentElement.cellIndex) {
       if (allPegs.length >= 2) {
         // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
         allPegs[0].remove();
       }
       // adds pin at the last score
-      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML(
-        "beforeend",
-        `<i class="fa-sharp fa-solid fa-map-pin"></i>`
-      );
+      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
     }
 
     // HANDLES EACH PLAYERS HANDS
@@ -515,35 +570,24 @@ function renderUI(board) {
     currentPlayer.hand.forEach((card) => {
       currentPlayerHandUI.insertAdjacentHTML(
         "beforeend",
-        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${
-          card.suit
-        } ${card.rank}" />`
+        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${card.suit} ${card.rank}" />`
       );
     });
   }
   // DEALS WITH CRIB
   const cribUI = document.querySelector(".crib");
-  const currentCribOwner = board.players.find(
-    (player) => player.isCrib === true
-  );
+  const currentCribOwner = board.players.find((player) => player.isCrib === true);
   // changes crib owner
-  cribUI.querySelector(
-    ".crib-owner"
-  ).textContent = `It is ${currentCribOwner.name}'s Crib`;
+  cribUI.querySelector(".crib-owner").textContent = `It is ${currentCribOwner.name}'s Crib`;
 
   const cribHandUI = cribUI.querySelector(".crib-hand");
   // clears old cards
   cribHandUI.innerHTML = "";
   // adds new crib cards
   currentCribOwner.crib.forEach((card) => {
-    cribHandUI.insertAdjacentHTML(
-      "beforeend",
-      `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
-    );
+    cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
   });
-  document.querySelector(
-    ".cut-card"
-  ).children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
+  document.querySelector(".cut-card").children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
   if (board.phase === midTurnCut) {
     document.querySelector(".button").style.display = "flex";
     document.querySelector(".button").textContent = "cut";
@@ -559,19 +603,9 @@ function renderUI(board) {
   if (board.phase === peggingPhase) {
     document.querySelector(".pegging").style.display = "flex";
     document.querySelector("body").style.paddingTop = "0";
-    document.querySelector(
-      ".player1Pile"
-    ).children[0].src = `/Pictures/card_${board.pile1[
-      board.pile1Card
-    ].toCardCode()}.png`;
-    document.querySelector(
-      ".player2Pile"
-    ).children[0].src = `/Pictures/card_${board.pile2[
-      board.pile2Card
-    ].toCardCode()}.png`;
-    document.querySelector(
-      ".pegging-score"
-    ).children[0].innerHTML = `${board.peggingScore}`;
+    document.querySelector(".player1Pile").children[0].src = `/Pictures/card_${board.pile1[board.pile1Card].toCardCode()}.png`;
+    document.querySelector(".player2Pile").children[0].src = `/Pictures/card_${board.pile2[board.pile2Card].toCardCode()}.png`;
+    document.querySelector(".pegging-score").children[0].innerHTML = `${board.peggingScore}`;
   } else {
     document.querySelector(".pegging").style.display = "none";
     document.querySelector("body").style.paddingTop = "5%";
