@@ -575,7 +575,6 @@ function reset(board) {
   board.phase = initialCut;
   board.players[0].score = 0;
   board.players[1].score = 0;
-  board.players[0].score = 40;
 
   board.emptyHand();
   render(board);
