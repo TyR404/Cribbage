@@ -203,3 +203,30 @@ i {
 .pegging-score {
   font-size: 40px;
 }
+
+.win {
+  height: 100vh;
+  width: 100%;
+  background-color: #eeeeee;
+  padding: 20%;
+}
+
+.win h1 {
+  margin-bottom: 5em;
+}
+
+footer {
+  grid-column-start: 1;
+  grid-column-end: 10;
+}
+
+.win-button {
+  text-align: center;
+  margin: auto;
+  background-color: #000000;
+  color: #eeeeee;
+  width: 10em;
+  height: 3em;
+  border-radius: 5px;
+  padding: 1em;
+}
