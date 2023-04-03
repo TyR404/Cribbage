@@ -112,8 +112,6 @@ CribbageBoard.prototype.emptyHand = function () {
     let cardToPutBack = player2.crib.pop();
     this.deck.cards.push(cardToPutBack);
   }
-
-  console.log(player1);
 };
 
 CribbageBoard.prototype.dealCards = function (n) {
