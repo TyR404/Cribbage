@@ -468,7 +468,7 @@ function lookForRuns(array, allRuns, useRunAmount = true) {
       continue;
     }
 
-    // if the current element isnt one more that the previous one or if its the last element in the array
+    // if the current element isn't one more that the previous one or if its the last element in the array
     if (array[i].rank !== array[i - 1].rank + 1 || i === array.length - 1) {
       // if its the last element in the array
       if (array[i].rank === array[i - 1].rank + 1 && i === array.length - 1) {
@@ -688,5 +688,6 @@ document.querySelector("#hand1").addEventListener("click", board.addToCrib);
 document.querySelector("#hand2").addEventListener("click", board.addToCrib);
 document.querySelector(".button").addEventListener("click", buttonHandler);
 document.querySelector("#hand1").addEventListener("click", board.pegging);
+// document.querySelector("#hand1").addEventListener("click", (event) => board.pegging(event));
 document.querySelector("#hand2").addEventListener("click", board.pegging);
 document.querySelector("#reset").addEventListener("click", resetHandler);
