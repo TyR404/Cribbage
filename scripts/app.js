@@ -35,10 +35,7 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [
-      this.cards[randomIndex],
-      this.cards[currentIndex],
-    ];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
   }
 };
 
@@ -66,21 +63,7 @@ Card.prototype.toCardCode = function () {
   if (this.suit === "BACK") {
     return "BACK";
   }
-  const cardNames = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-  ];
+  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -271,9 +254,7 @@ CribbageBoard.prototype.pegging = function (event) {
       let amountOfPairs = 0;
 
       for (let i = 0; i < board.currentPeggingHand.length; i++) {
-        potentialPairs.push(
-          board.currentPeggingHand[board.currentPeggingHand.length - i - 1]
-        );
+        potentialPairs.push(board.currentPeggingHand[board.currentPeggingHand.length - i - 1]);
         if (potentialPairs.length >= 2) {
           let allPairs = [];
           lookForPairsAndFifteens([], [...potentialPairs], [], allPairs);
@@ -342,27 +323,15 @@ CribbageBoard.prototype.pegging = function (event) {
     // if next player cannot play
     let temporaryHand = [...board.players[board.turn].hand];
     temporaryHand.sort((a, b) => a - b);
-    if (
-      board.players[board.turn].hand.length === 0 ||
-      31 - board.peggingScore < getRank(temporaryHand[0])
-    ) {
-      console.log(
-        `${board.players[board.turn].name} cannot play, switching players`
-      );
+    if (board.players[board.turn].hand.length === 0 || 31 - board.peggingScore < getRank(temporaryHand[0])) {
+      console.log(`${board.players[board.turn].name} cannot play, switching players`);
       changePlayerTurn();
       // check if current player can play
       let temporaryHand = [...board.players[board.turn].hand];
       temporaryHand.sort((a, b) => a - b);
-      if (
-        board.players[board.turn].hand.length === 0 ||
-        31 - board.peggingScore < getRank(temporaryHand[0])
-      ) {
+      if (board.players[board.turn].hand.length === 0 || 31 - board.peggingScore < getRank(temporaryHand[0])) {
         // if not, set score to 0 and award points
-        console.log(
-          `${
-            board.players[board.turn].name
-          } cannot play, +1 point for last card`
-        );
+        console.log(`${board.players[board.turn].name} cannot play, +1 point for last card`);
         board.players[board.turn].score++;
         board.peggingScore = 0;
         board.currentPeggingHand = [];
@@ -541,15 +510,7 @@ function lookForPairsAndFifteens(subset, insertedArray, allFifteens, allPairs) {
   lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
 
   // If the current subset totals to 15, or anything else we may like
-  if (
-    subset.reduce(
-      (accumulator, card) =>
-        card.faceCard === true
-          ? (accumulator += 10)
-          : (accumulator += card.rank),
-      0
-    ) === 15
-  ) {
+  if (subset.reduce((accumulator, card) => (card.faceCard === true ? (accumulator += 10) : (accumulator += card.rank)), 0) === 15) {
     // adds the current subset to the final array
     allFifteens.push([...subset]);
     // stops recursion
@@ -584,6 +545,21 @@ function reset(board) {
   board.players[1].score = 0;
 
   board.emptyHand();
+
+  const cribbageBoardUI = document.querySelector(".cribbage-board");
+  for (let i = 0; i < board.players.length; i++) {
+    const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
+    const currentRowElementsUI = [...currentRowUI.querySelectorAll("td")];
+    const allPegs = [...currentRowUI.querySelectorAll("i")];
+    currentRowElementsUI.forEach((td) => {
+      td.classList.remove("scored");
+    });
+    allPegs.forEach((peg) => {
+      peg.remove();
+    });
+    currentRowElementsUI[0].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+    currentRowElementsUI[1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+  }
   render(board);
 }
 
@@ -610,8 +586,7 @@ function render(board) {
 }
 
 function renderUI(board) {
-  let boardLength =
-    document.querySelector("table").children[0].children[0].children.length;
+  let boardLength = document.querySelector("table").children[0].children[0].children.length;
   let winBox = document.querySelector("footer");
   if (board.players[0].score >= boardLength - 2) {
     document.querySelector("main").style.display = "none";
@@ -620,16 +595,12 @@ function renderUI(board) {
     document.querySelector("body").style.padding = "0%";
     document.querySelector("h1").textContent = "player1 Wins";
     return;
-  } else if (board.players[1].score >= boardLength) {
+  } else if (board.players[1].score >= boardLength - 2) {
     document.querySelector("main").style.display = "none";
     document.querySelector("aside").style.display = "none";
+    winBox.style.display = "block";
     document.querySelector("body").style.padding = "0%";
     document.querySelector("h1").textContent = "player2 Wins";
-    for (let i = boardLength; i > 0; i--) {
-      document.querySelector("table").children[0].children[0].children[
-        i
-      ].classList = "";
-    }
     return;
   } else {
     document.querySelector("main").style.display = "block";
@@ -642,10 +613,8 @@ function renderUI(board) {
     const currentPlayer = board.players[i];
     const currentPlayerUI = document.querySelector(`.player${i + 1}-details`);
     // HANDLES EACH PLAYERS NAME AND SCORE
-    currentPlayerUI.querySelector(".player-name").textContent =
-      currentPlayer.name;
-    currentPlayerUI.querySelector(".player-score").textContent =
-      currentPlayer.score;
+    currentPlayerUI.querySelector(".player-name").textContent = currentPlayer.name;
+    currentPlayerUI.querySelector(".player-score").textContent = currentPlayer.score;
 
     // CHANGES THE POINTS ON THE VISUAL BOARD
     const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
@@ -655,19 +624,13 @@ function renderUI(board) {
     for (let i = 0; i < currentPlayer.score + 2; i++) {
       currentRowElementsUI[i].classList.add("scored");
     }
-    if (
-      currentPlayer.score + 1 >
-      allPegs[allPegs.length - 1].parentElement.cellIndex
-    ) {
+    if (currentPlayer.score + 1 > allPegs[allPegs.length - 1].parentElement.cellIndex) {
       if (allPegs.length >= 2) {
         // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
         allPegs[0].remove();
       }
       // adds pin at the last score
-      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML(
-        "beforeend",
-        `<i class="fa-sharp fa-solid fa-map-pin"></i>`
-      );
+      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
     }
 
     // HANDLES EACH PLAYERS HANDS
@@ -678,35 +641,24 @@ function renderUI(board) {
     currentPlayer.hand.forEach((card) => {
       currentPlayerHandUI.insertAdjacentHTML(
         "beforeend",
-        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${
-          card.suit
-        } ${card.rank}" />`
+        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${card.suit} ${card.rank}" />`
       );
     });
   }
   // DEALS WITH CRIB
   const cribUI = document.querySelector(".crib");
-  const currentCribOwner = board.players.find(
-    (player) => player.isCrib === true
-  );
+  const currentCribOwner = board.players.find((player) => player.isCrib === true);
   // changes crib owner
-  cribUI.querySelector(
-    ".crib-owner"
-  ).textContent = `It is ${currentCribOwner.name}'s Crib`;
+  cribUI.querySelector(".crib-owner").textContent = `It is ${currentCribOwner.name}'s Crib`;
 
   const cribHandUI = cribUI.querySelector(".crib-hand");
   // clears old cards
   cribHandUI.innerHTML = "";
   // adds new crib cards
   currentCribOwner.crib.forEach((card) => {
-    cribHandUI.insertAdjacentHTML(
-      "beforeend",
-      `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
-    );
+    cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
   });
-  document.querySelector(
-    ".cut-card"
-  ).children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
+  document.querySelector(".cut-card").children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
   if (board.phase === midTurnCut) {
     document.querySelector(".button").style.display = "flex";
     document.querySelector(".button").textContent = "cut";
@@ -722,19 +674,9 @@ function renderUI(board) {
   if (board.phase === peggingPhase) {
     document.querySelector(".pegging").style.display = "flex";
     document.querySelector("body").style.paddingTop = "0";
-    document.querySelector(
-      ".player1Pile"
-    ).children[0].src = `/Pictures/card_${board.pile1[
-      board.pile1Card
-    ].toCardCode()}.png`;
-    document.querySelector(
-      ".player2Pile"
-    ).children[0].src = `/Pictures/card_${board.pile2[
-      board.pile2Card
-    ].toCardCode()}.png`;
-    document.querySelector(
-      ".pegging-score"
-    ).children[0].innerHTML = `${board.peggingScore}`;
+    document.querySelector(".player1Pile").children[0].src = `/Pictures/card_${board.pile1[board.pile1Card].toCardCode()}.png`;
+    document.querySelector(".player2Pile").children[0].src = `/Pictures/card_${board.pile2[board.pile2Card].toCardCode()}.png`;
+    document.querySelector(".pegging-score").children[0].innerHTML = `${board.peggingScore}`;
   } else {
     document.querySelector(".pegging").style.display = "none";
     document.querySelector("body").style.paddingTop = "5%";
