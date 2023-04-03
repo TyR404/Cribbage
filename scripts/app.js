@@ -388,6 +388,13 @@ CribbageBoard.prototype.finalScoring = function () {
   this.cut = [back];
   this.phase = cardSelectionPhase;
   this.emptyHand();
+  if (this.players[0].isCrib) {
+    this.players[0].isCrib = false;
+    this.players[1].isCrib = true;
+  } else {
+    this.players[0].isCrib = true;
+    this.players[1].isCrib = false;
+  }
   setTimeout(() => {
     this.phase = cardSelectionPhase;
     render(this);
@@ -575,6 +582,7 @@ function reset(board) {
   board.phase = initialCut;
   board.players[0].score = 0;
   board.players[1].score = 0;
+  board.players[0].score = 47;
 
   board.emptyHand();
   render(board);
@@ -606,7 +614,7 @@ function renderUI(board) {
   let boardLength =
     document.querySelector("table").children[0].children[0].children.length;
   let winBox = document.querySelector("footer");
-  if (board.players[0].score >= boardLength) {
+  if (board.players[0].score >= boardLength - 2) {
     document.querySelector("main").style.display = "none";
     document.querySelector("aside").style.display = "none";
     winBox.style.display = "block";
@@ -618,6 +626,11 @@ function renderUI(board) {
     document.querySelector("aside").style.display = "none";
     document.querySelector("body").style.padding = "0%";
     document.querySelector("h1").textContent = "player2 Wins";
+    for (let i = boardLength; i > 0; i--) {
+      document.querySelector("table").children[0].children[0].children[
+        i
+      ].classList = "";
+    }
     return;
   } else {
     document.querySelector("main").style.display = "block";
@@ -738,4 +751,3 @@ document.querySelector(".button").addEventListener("click", buttonHandler);
 document.querySelector("#hand1").addEventListener("click", board.pegging);
 document.querySelector("#hand2").addEventListener("click", board.pegging);
 document.querySelector("#reset").addEventListener("click", resetHandler);
-console.log(document.querySelector("#reset"));
