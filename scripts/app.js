@@ -219,53 +219,54 @@ CribbageBoard.prototype.midTurnCut = function () {
 };
 
 CribbageBoard.prototype.pegging = function (event) {
-  if (this.phase != peggingPhase) {
+  let board = this;
+  if (board.phase != peggingPhase) {
     return;
   }
-  console.log(`player${this.turn + 1}'s Turn`);
+  console.log(`player${board.turn + 1}'s Turn`);
 
-  if (event.target.parentElement.id === `hand${this.turn + 1}`) {
+  if (event.target.parentElement.id === `hand${board.turn + 1}`) {
     let suit = event.target.classList[1];
     let rank = event.target.classList[2];
-    let card = this.findCard(this.turn, suit, parseInt(rank));
+    let card = board.findCard(board.turn, suit, parseInt(rank));
     let points = card.faceCard ? 10 : card.rank;
 
     // checks if the smallest card in the current players hand is too big to be added
-    if (points > 31 - this.peggingScore) {
+    if (points > 31 - board.peggingScore) {
       console.log(`Card too high, choose another`);
     } else {
-      let index = this.players[this.turn].hand.indexOf(card);
-      let CardToAdd = this.players[this.turn].hand.splice(index, 1)[0];
+      let index = board.players[board.turn].hand.indexOf(card);
+      let CardToAdd = board.players[board.turn].hand.splice(index, 1)[0];
 
-      if (this.turn === 0) {
-        this.pile1.push(CardToAdd);
-        this.pile1Card++;
+      if (board.turn === 0) {
+        board.pile1.push(CardToAdd);
+        board.pile1Card++;
       } else {
-        this.pile2.push(CardToAdd);
-        this.pile2Card++;
+        board.pile2.push(CardToAdd);
+        board.pile2Card++;
       }
 
       if (CardToAdd.faceCard) {
-        this.peggingScore = this.peggingScore + 10;
+        board.peggingScore = board.peggingScore + 10;
       } else {
-        this.peggingScore = this.peggingScore + CardToAdd.rank;
+        board.peggingScore = board.peggingScore + CardToAdd.rank;
       }
 
-      if (this.peggingScore === 15) {
-        this.players[this.turn].score = this.players[this.turn].score + 2;
+      if (board.peggingScore === 15) {
+        board.players[board.turn].score = board.players[board.turn].score + 2;
       }
-      if (this.peggingScore === 31) {
-        this.players[this.turn].score = this.players[this.turn].score + 2;
-        this.peggingScore = 0;
+      if (board.peggingScore === 31) {
+        board.players[board.turn].score = board.players[board.turn].score + 2;
+        board.peggingScore = 0;
       }
-      renderUI(this);
-      this.currentPeggingHand.push(card);
+      renderUI(board);
+      board.currentPeggingHand.push(card);
       let potentialPairs = [];
       let amountOfPairs = 0;
 
-      for (let i = 0; i < this.currentPeggingHand.length; i++) {
+      for (let i = 0; i < board.currentPeggingHand.length; i++) {
         potentialPairs.push(
-          this.currentPeggingHand[this.currentPeggingHand.length - i - 1]
+          board.currentPeggingHand[board.currentPeggingHand.length - i - 1]
         );
         if (potentialPairs.length >= 2) {
           let allPairs = [];
@@ -277,12 +278,12 @@ CribbageBoard.prototype.pegging = function (event) {
         }
       }
 
-      this.players[this.turn].score += amountOfPairs * 2;
+      board.players[board.turn].score += amountOfPairs * 2;
 
-      let potentialRun = [...this.currentPeggingHand];
+      let potentialRun = [...board.currentPeggingHand];
       let runLength = 0;
 
-      for (let i = 0; i < this.currentPeggingHand.length; i++) {
+      for (let i = 0; i < board.currentPeggingHand.length; i++) {
         if (potentialRun.length >= 3) {
           let allRuns = [];
           lookForRuns([...potentialRun], allRuns, false);
@@ -293,38 +294,37 @@ CribbageBoard.prototype.pegging = function (event) {
           potentialRun.shift();
         }
       }
-      this.players[this.turn].score += runLength;
+      board.players[board.turn].score += runLength;
 
-      renderUI(this);
-      changePlayerTurn(this);
-      checkIfCanPlay(this);
+      renderUI(board);
+      changePlayerTurn();
+      checkIfCanPlay();
     }
   }
 
-  let player1 = this.players[0];
-  let player2 = this.players[1];
+  let player1 = board.players[0];
+  let player2 = board.players[1];
 
   let player1hand = player1.hand;
   let player2hand = player2.hand;
 
   if (player1hand.length === 0 && player2hand.length === 0) {
     for (let i = 0; i < 4; i++) {
-      let cardToPutBack1 = this.pile1.pop();
+      let cardToPutBack1 = board.pile1.pop();
       player1hand.push(cardToPutBack1);
 
-      let cardToPutBack2 = this.pile2.pop();
+      let cardToPutBack2 = board.pile2.pop();
       player2hand.push(cardToPutBack2);
 
       board.pile1Card = 0;
       board.pile2Card = 0;
-      renderUI(this);
+      renderUI(board);
     }
     board.phase = countingHandScore;
-    render(this);
+    render(board);
   }
 
-  function changePlayerTurn(board) {
-    console.log(board);
+  function changePlayerTurn() {
     if (board.turn === 0) {
       board.turn = 1;
     } else {
@@ -332,7 +332,7 @@ CribbageBoard.prototype.pegging = function (event) {
     }
   }
 
-  function checkIfCanPlay(board) {
+  function checkIfCanPlay() {
     // if next player cannot play
     let temporaryHand = [...board.players[board.turn].hand];
     temporaryHand.sort((a, b) => a - b);
