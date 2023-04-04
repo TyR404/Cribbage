@@ -559,12 +559,7 @@ function lookForPairsAndFifteens(subset, insertedArray, allFifteens, allPairs) {
   }
 }
 
-Player.prototype.getCurrentScore = function () {
-  // return this.score
-};
-
 function buttonHandler() {
-  console.log("fired");
   if (board.phase === midTurnCut) {
     board.midTurnCut();
     board.phase = peggingPhase;
