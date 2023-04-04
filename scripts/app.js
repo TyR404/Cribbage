@@ -297,8 +297,12 @@ CribbageBoard.prototype.pegging = function (event) {
       board.players[board.turn].score += runLength;
 
       renderUI(board);
-      changePlayerTurn();
-      checkIfCanPlay();
+      if (board.turn === 0) {
+        board.turn = 1;
+      } else {
+        board.turn = 0;
+      }
+      checkIfCanPlay(board);
     }
   }
 
@@ -324,15 +328,7 @@ CribbageBoard.prototype.pegging = function (event) {
     render(board);
   }
 
-  function changePlayerTurn() {
-    if (board.turn === 0) {
-      board.turn = 1;
-    } else {
-      board.turn = 0;
-    }
-  }
-
-  function checkIfCanPlay() {
+  function checkIfCanPlay(board) {
     // if next player cannot play
     let temporaryHand = [...board.players[board.turn].hand];
     temporaryHand.sort((a, b) => a - b);
@@ -343,7 +339,11 @@ CribbageBoard.prototype.pegging = function (event) {
       console.log(
         `${board.players[board.turn].name} cannot play, switching players`
       );
-      changePlayerTurn();
+      if (board.turn === 0) {
+        board.turn = 1;
+      } else {
+        board.turn = 0;
+      }
       // check if current player can play
       let temporaryHand = [...board.players[board.turn].hand];
       temporaryHand.sort((a, b) => a - b);
@@ -361,7 +361,11 @@ CribbageBoard.prototype.pegging = function (event) {
         board.peggingScore = 0;
         board.currentPeggingHand = [];
         renderUI(board);
-        changePlayerTurn();
+        if (board.turn === 0) {
+          board.turn = 1;
+        } else {
+          board.turn = 0;
+        }
       }
     }
   }
