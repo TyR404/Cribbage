@@ -35,7 +35,10 @@ Deck.prototype.shuffle = function () {
     currentIndex--;
 
     // And swap it with the current element.
-    [this.cards[currentIndex], this.cards[randomIndex]] = [this.cards[randomIndex], this.cards[currentIndex]];
+    [this.cards[currentIndex], this.cards[randomIndex]] = [
+      this.cards[randomIndex],
+      this.cards[currentIndex],
+    ];
   }
 };
 
@@ -63,7 +66,21 @@ Card.prototype.toCardCode = function () {
   if (this.suit === "BACK") {
     return "BACK";
   }
-  const cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const cardNames = [
+    "A",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K",
+  ];
   return `${cardNames[this.rank - 1]}${this.suit}`;
 };
 
@@ -87,30 +104,20 @@ function CribbageBoard() {
   this.currentPeggingHand = [];
 }
 CribbageBoard.prototype.emptyHand = function () {
-  let player1 = this.players[0];
-  let player2 = this.players[1];
-
-  let player1hand = player1.hand;
-  let player2hand = player2.hand;
-
-  for (let i = player1hand.length; i > 0; i--) {
-    let cardToPutBack = player1hand.pop();
-    this.deck.cards.push(cardToPutBack);
+  for (let player of this.players) {
+    let playerHand = player.hand;
+    for (let i = playerHand.length; i > 0; i--) {
+      let cardToPutBack = playerHand.pop();
+      this.deck.cards.push(cardToPutBack);
+    }
   }
 
-  for (let i = player2hand.length; i > 0; i--) {
-    let cardToPutBack = player2hand.pop();
-    this.deck.cards.push(cardToPutBack);
-  }
-
-  for (let i = player1.crib.length; i > 0; i--) {
-    let cardToPutBack = player1.crib.pop();
-    this.deck.cards.push(cardToPutBack);
-  }
-
-  for (let i = player2.crib.length; i > 0; i--) {
-    let cardToPutBack = player2.crib.pop();
-    this.deck.cards.push(cardToPutBack);
+  for (let player of this.players) {
+    let playerCrib = player.crib;
+    for (let i = playerCrib.length; i > 0; i--) {
+      let cardToPutBack = playerCrib.pop();
+      this.deck.cards.push(cardToPutBack);
+    }
   }
 };
 
@@ -151,13 +158,18 @@ CribbageBoard.prototype.initialCut = function () {
   let player1hand = player1.hand;
   let player2hand = player2.hand;
 
-  this.dealCards(1);
+  while (player1.isCrib === player2.isCrib) {
+    this.dealCards(1);
+    if (player1hand[0].rank < player2hand[0].rank) {
+      player1.isCrib = true;
+      this.turn = 1;
+    } else {
+      player2.isCrib = true;
+    }
 
-  if (player1hand[0].rank < player2hand[0].rank) {
-    player1.isCrib = true;
-    this.turn = 1;
-  } else {
-    player2.isCrib = true;
+    if (player1.isCrib === player2.isCrib) {
+      this.emptyHand();
+    }
   }
 
   setTimeout(() => {
@@ -172,30 +184,30 @@ CribbageBoard.prototype.cardSelectionPhase = function () {
 };
 
 CribbageBoard.prototype.addToCrib = function (event) {
-  if (board.phase != cardSelectionPhase) {
+  if (this.phase != cardSelectionPhase) {
     return;
   }
   if (event.target.classList[0] != "card") {
     return;
   }
   let player = 0;
-  if (this.id === "hand2") {
+  if (event.target.parentElement.id === "hand2") {
     player++;
   }
-  if (board.players[player].hand.length === 4) {
+  if (this.players[player].hand.length === 4) {
     return;
   }
   let suit = event.target.classList[1];
   let rank = event.target.classList[2];
-  let card = board.findCard(player, suit, parseInt(rank));
-  let index = board.players[player].hand.indexOf(card);
-  let add = board.players[player].hand.splice(index, 1);
-  let playerCrib = board.findCribPlayer().crib;
-  playerCrib.push(add[0]);
+  let card = this.findCard(player, suit, parseInt(rank));
+  let indexOfCard = this.players[player].hand.indexOf(card);
+  let cardToAdd = this.players[player].hand.splice(indexOfCard, 1)[0];
+  let playerCrib = this.findCribPlayer().crib;
+  playerCrib.push(cardToAdd);
   renderUI(board);
-  if (board.findCribPlayer().crib.length === 4) {
-    board.phase = midTurnCut;
-    render(board);
+  if (playerCrib.length === 4) {
+    this.phase = midTurnCut;
+    render(this);
   }
 };
 
@@ -207,52 +219,54 @@ CribbageBoard.prototype.midTurnCut = function () {
 };
 
 CribbageBoard.prototype.pegging = function (event) {
-  if (board.phase != peggingPhase) {
+  if (this.phase != peggingPhase) {
     return;
   }
-  console.log(`player${board.turn + 1}'s Turn`);
+  console.log(`player${this.turn + 1}'s Turn`);
 
-  if (event.target.parentElement.id === `hand${board.turn + 1}`) {
+  if (event.target.parentElement.id === `hand${this.turn + 1}`) {
     let suit = event.target.classList[1];
     let rank = event.target.classList[2];
-    let card = board.findCard(board.turn, suit, parseInt(rank));
+    let card = this.findCard(this.turn, suit, parseInt(rank));
     let points = card.faceCard ? 10 : card.rank;
 
     // checks if the smallest card in the current players hand is too big to be added
-    if (points > 31 - board.peggingScore) {
+    if (points > 31 - this.peggingScore) {
       console.log(`Card too high, choose another`);
     } else {
-      let index = board.players[board.turn].hand.indexOf(card);
-      let add = board.players[board.turn].hand.splice(index, 1);
+      let index = this.players[this.turn].hand.indexOf(card);
+      let CardToAdd = this.players[this.turn].hand.splice(index, 1)[0];
 
-      if (board.turn === 0) {
-        board.pile1.push(add[0]);
-        board.pile1Card++;
+      if (this.turn === 0) {
+        this.pile1.push(CardToAdd);
+        this.pile1Card++;
       } else {
-        board.pile2.push(add[0]);
-        board.pile2Card++;
+        this.pile2.push(CardToAdd);
+        this.pile2Card++;
       }
 
-      if (add[0].faceCard) {
-        board.peggingScore = board.peggingScore + 10;
+      if (CardToAdd.faceCard) {
+        this.peggingScore = this.peggingScore + 10;
       } else {
-        board.peggingScore = board.peggingScore + add[0].rank;
+        this.peggingScore = this.peggingScore + CardToAdd.rank;
       }
 
-      if (board.peggingScore === 15) {
-        board.players[board.turn].score = board.players[board.turn].score + 2;
+      if (this.peggingScore === 15) {
+        this.players[this.turn].score = this.players[this.turn].score + 2;
       }
-      if (board.peggingScore === 31) {
-        board.players[board.turn].score = board.players[board.turn].score + 2;
-        board.peggingScore = 0;
+      if (this.peggingScore === 31) {
+        this.players[this.turn].score = this.players[this.turn].score + 2;
+        this.peggingScore = 0;
       }
-      renderUI(board);
-      board.currentPeggingHand.push(card);
+      renderUI(this);
+      this.currentPeggingHand.push(card);
       let potentialPairs = [];
       let amountOfPairs = 0;
 
-      for (let i = 0; i < board.currentPeggingHand.length; i++) {
-        potentialPairs.push(board.currentPeggingHand[board.currentPeggingHand.length - i - 1]);
+      for (let i = 0; i < this.currentPeggingHand.length; i++) {
+        potentialPairs.push(
+          this.currentPeggingHand[this.currentPeggingHand.length - i - 1]
+        );
         if (potentialPairs.length >= 2) {
           let allPairs = [];
           lookForPairsAndFifteens([], [...potentialPairs], [], allPairs);
@@ -263,12 +277,12 @@ CribbageBoard.prototype.pegging = function (event) {
         }
       }
 
-      board.players[board.turn].score += amountOfPairs * 2;
+      this.players[this.turn].score += amountOfPairs * 2;
 
-      let potentialRun = [...board.currentPeggingHand];
+      let potentialRun = [...this.currentPeggingHand];
       let runLength = 0;
 
-      for (let i = 0; i < board.currentPeggingHand.length; i++) {
+      for (let i = 0; i < this.currentPeggingHand.length; i++) {
         if (potentialRun.length >= 3) {
           let allRuns = [];
           lookForRuns([...potentialRun], allRuns, false);
@@ -279,37 +293,38 @@ CribbageBoard.prototype.pegging = function (event) {
           potentialRun.shift();
         }
       }
-      board.players[board.turn].score += runLength;
+      this.players[this.turn].score += runLength;
 
-      renderUI(board);
-      changePlayerTurn();
-      checkIfCanPlay();
+      renderUI(this);
+      changePlayerTurn(this);
+      checkIfCanPlay(this);
     }
   }
 
-  let player1 = board.players[0];
-  let player2 = board.players[1];
+  let player1 = this.players[0];
+  let player2 = this.players[1];
 
   let player1hand = player1.hand;
   let player2hand = player2.hand;
 
   if (player1hand.length === 0 && player2hand.length === 0) {
     for (let i = 0; i < 4; i++) {
-      let cardToPutBack1 = board.pile1.pop();
+      let cardToPutBack1 = this.pile1.pop();
       player1hand.push(cardToPutBack1);
 
-      let cardToPutBack2 = board.pile2.pop();
+      let cardToPutBack2 = this.pile2.pop();
       player2hand.push(cardToPutBack2);
 
       board.pile1Card = 0;
       board.pile2Card = 0;
-      renderUI(board);
+      renderUI(this);
     }
     board.phase = countingHandScore;
-    render(board);
+    render(this);
   }
 
-  function changePlayerTurn() {
+  function changePlayerTurn(board) {
+    console.log(board);
     if (board.turn === 0) {
       board.turn = 1;
     } else {
@@ -317,19 +332,31 @@ CribbageBoard.prototype.pegging = function (event) {
     }
   }
 
-  function checkIfCanPlay() {
+  function checkIfCanPlay(board) {
     // if next player cannot play
     let temporaryHand = [...board.players[board.turn].hand];
     temporaryHand.sort((a, b) => a - b);
-    if (board.players[board.turn].hand.length === 0 || 31 - board.peggingScore < getRank(temporaryHand[0])) {
-      console.log(`${board.players[board.turn].name} cannot play, switching players`);
+    if (
+      board.players[board.turn].hand.length === 0 ||
+      31 - board.peggingScore < getRank(temporaryHand[0])
+    ) {
+      console.log(
+        `${board.players[board.turn].name} cannot play, switching players`
+      );
       changePlayerTurn();
       // check if current player can play
       let temporaryHand = [...board.players[board.turn].hand];
       temporaryHand.sort((a, b) => a - b);
-      if (board.players[board.turn].hand.length === 0 || 31 - board.peggingScore < getRank(temporaryHand[0])) {
+      if (
+        board.players[board.turn].hand.length === 0 ||
+        31 - board.peggingScore < getRank(temporaryHand[0])
+      ) {
         // if not, set score to 0 and award points
-        console.log(`${board.players[board.turn].name} cannot play, +1 point for last card`);
+        console.log(
+          `${
+            board.players[board.turn].name
+          } cannot play, +1 point for last card`
+        );
         board.players[board.turn].score++;
         board.peggingScore = 0;
         board.currentPeggingHand = [];
@@ -508,7 +535,15 @@ function lookForPairsAndFifteens(subset, insertedArray, allFifteens, allPairs) {
   lookForPairsAndFifteens([...subset], [...array], allFifteens, allPairs);
 
   // If the current subset totals to 15, or anything else we may like
-  if (subset.reduce((accumulator, card) => (card.faceCard === true ? (accumulator += 10) : (accumulator += card.rank)), 0) === 15) {
+  if (
+    subset.reduce(
+      (accumulator, card) =>
+        card.faceCard === true
+          ? (accumulator += 10)
+          : (accumulator += card.rank),
+      0
+    ) === 15
+  ) {
     // adds the current subset to the final array
     allFifteens.push([...subset]);
     // stops recursion
@@ -525,6 +560,7 @@ Player.prototype.getCurrentScore = function () {
 };
 
 function buttonHandler() {
+  console.log("fired");
   if (board.phase === midTurnCut) {
     board.midTurnCut();
     board.phase = peggingPhase;
@@ -555,8 +591,14 @@ function reset(board) {
     allPegs.forEach((peg) => {
       peg.remove();
     });
-    currentRowElementsUI[0].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
-    currentRowElementsUI[1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+    currentRowElementsUI[0].insertAdjacentHTML(
+      "beforeend",
+      `<i class="fa-sharp fa-solid fa-map-pin"></i>`
+    );
+    currentRowElementsUI[1].insertAdjacentHTML(
+      "beforeend",
+      `<i class="fa-sharp fa-solid fa-map-pin"></i>`
+    );
   }
   render(board);
 }
@@ -584,7 +626,8 @@ function render(board) {
 }
 
 function renderUI(board) {
-  let boardLength = document.querySelector("table").children[0].children[0].children.length;
+  let boardLength =
+    document.querySelector("table").children[0].children[0].children.length;
   let winBox = document.querySelector("footer");
   if (board.players[0].score >= boardLength - 2) {
     document.querySelector("main").style.display = "none";
@@ -611,8 +654,10 @@ function renderUI(board) {
     const currentPlayer = board.players[i];
     const currentPlayerUI = document.querySelector(`.player${i + 1}-details`);
     // HANDLES EACH PLAYERS NAME AND SCORE
-    currentPlayerUI.querySelector(".player-name").textContent = currentPlayer.name;
-    currentPlayerUI.querySelector(".player-score").textContent = currentPlayer.score;
+    currentPlayerUI.querySelector(".player-name").textContent =
+      currentPlayer.name;
+    currentPlayerUI.querySelector(".player-score").textContent =
+      currentPlayer.score;
 
     // CHANGES THE POINTS ON THE VISUAL BOARD
     const currentRowUI = cribbageBoardUI.querySelectorAll("tr")[i];
@@ -622,13 +667,19 @@ function renderUI(board) {
     for (let i = 0; i < currentPlayer.score + 2; i++) {
       currentRowElementsUI[i].classList.add("scored");
     }
-    if (currentPlayer.score + 1 > allPegs[allPegs.length - 1].parentElement.cellIndex) {
+    if (
+      currentPlayer.score + 1 >
+      allPegs[allPegs.length - 1].parentElement.cellIndex
+    ) {
       if (allPegs.length >= 2) {
         // REMOVE LAST PEG IF THERE ARE MORE THAN TWO PEGS
         allPegs[0].remove();
       }
       // adds pin at the last score
-      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML("beforeend", `<i class="fa-sharp fa-solid fa-map-pin"></i>`);
+      currentRowElementsUI[currentPlayer.score + 1].insertAdjacentHTML(
+        "beforeend",
+        `<i class="fa-sharp fa-solid fa-map-pin"></i>`
+      );
     }
 
     // HANDLES EACH PLAYERS HANDS
@@ -639,24 +690,35 @@ function renderUI(board) {
     currentPlayer.hand.forEach((card) => {
       currentPlayerHandUI.insertAdjacentHTML(
         "beforeend",
-        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${card.suit} ${card.rank}" />`
+        `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card ${
+          card.suit
+        } ${card.rank}" />`
       );
     });
   }
   // DEALS WITH CRIB
   const cribUI = document.querySelector(".crib");
-  const currentCribOwner = board.players.find((player) => player.isCrib === true);
+  const currentCribOwner = board.players.find(
+    (player) => player.isCrib === true
+  );
   // changes crib owner
-  cribUI.querySelector(".crib-owner").textContent = `It is ${currentCribOwner.name}'s Crib`;
+  cribUI.querySelector(
+    ".crib-owner"
+  ).textContent = `It is ${currentCribOwner.name}'s Crib`;
 
   const cribHandUI = cribUI.querySelector(".crib-hand");
   // clears old cards
   cribHandUI.innerHTML = "";
   // adds new crib cards
   currentCribOwner.crib.forEach((card) => {
-    cribHandUI.insertAdjacentHTML("beforeend", `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`);
+    cribHandUI.insertAdjacentHTML(
+      "beforeend",
+      `<img src="Pictures/card_${card.toCardCode()}.png" alt="" class="card" />`
+    );
   });
-  document.querySelector(".cut-card").children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
+  document.querySelector(
+    ".cut-card"
+  ).children[0].src = `Pictures/card_${board.cut[0].toCardCode()}.png`;
   if (board.phase === midTurnCut) {
     document.querySelector(".button").style.display = "flex";
     document.querySelector(".button").textContent = "cut";
@@ -672,9 +734,19 @@ function renderUI(board) {
   if (board.phase === peggingPhase) {
     document.querySelector(".pegging").style.display = "flex";
     document.querySelector("body").style.paddingTop = "0";
-    document.querySelector(".player1Pile").children[0].src = `/Pictures/card_${board.pile1[board.pile1Card].toCardCode()}.png`;
-    document.querySelector(".player2Pile").children[0].src = `/Pictures/card_${board.pile2[board.pile2Card].toCardCode()}.png`;
-    document.querySelector(".pegging-score").children[0].innerHTML = `${board.peggingScore}`;
+    document.querySelector(
+      ".player1Pile"
+    ).children[0].src = `/Pictures/card_${board.pile1[
+      board.pile1Card
+    ].toCardCode()}.png`;
+    document.querySelector(
+      ".player2Pile"
+    ).children[0].src = `/Pictures/card_${board.pile2[
+      board.pile2Card
+    ].toCardCode()}.png`;
+    document.querySelector(
+      ".pegging-score"
+    ).children[0].innerHTML = `${board.peggingScore}`;
   } else {
     document.querySelector(".pegging").style.display = "none";
     document.querySelector("body").style.paddingTop = "5%";
@@ -684,10 +756,17 @@ function renderUI(board) {
 const board = new CribbageBoard();
 resetHandler();
 
-document.querySelector("#hand1").addEventListener("click", board.addToCrib);
-document.querySelector("#hand2").addEventListener("click", board.addToCrib);
+document
+  .querySelector("#hand1")
+  .addEventListener("click", (event) => board.addToCrib(event));
+document
+  .querySelector("#hand2")
+  .addEventListener("click", (event) => board.addToCrib(event));
 document.querySelector(".button").addEventListener("click", buttonHandler);
-document.querySelector("#hand1").addEventListener("click", board.pegging);
-// document.querySelector("#hand1").addEventListener("click", (event) => board.pegging(event));
-document.querySelector("#hand2").addEventListener("click", board.pegging);
+document
+  .querySelector("#hand1")
+  .addEventListener("click", (event) => board.pegging(event));
+document
+  .querySelector("#hand2")
+  .addEventListener("click", (event) => board.pegging(event));
 document.querySelector("#reset").addEventListener("click", resetHandler);
